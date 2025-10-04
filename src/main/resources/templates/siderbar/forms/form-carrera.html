@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div th:fragment="content">
+    <div class="container mx-auto px-4 sm:px-8">
+        <div class="py-8">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-semibold leading-tight">Gestión de Carreras</h2>
+                <button id="open-carrera-modal-btn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    <i class="fas fa-plus"></i> Crear Nueva Carrera
+                </button>
+            </div>
+
+            <div class="-mx-4 sm:-mx-8 px-4 sm:px-8 py-4 overflow-x-auto">
+                <div class="inline-block min-w-full shadow-md rounded-lg overflow-hidden">
+                    <table class="min-w-full leading-normal">
+                        <thead>
+                        <tr>
+                            <th
+                                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                                ID
+                            </th>
+                            <th
+                                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                                Nombre de la Carrera
+                            </th>
+                            <th
+                                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                                Facultad
+                            </th>
+                            <th
+                                    class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-center text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                                Acciones
+                            </th>
+                        </tr>
+                        </thead>
+                        <tbody id="carrera-table-body">
+                        <tr th:each="carrera : ${carreras}">
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                <p class="text-gray-900 whitespace-no-wrap" th:text="${carrera.id}"></p>
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                <p class="text-gray-900 whitespace-no-wrap" th:text="${carrera.carrera}"></p>
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                                <p class="text-gray-900 whitespace-no-wrap" th:text="${carrera.facultad.nombre}"></p>
+                            </td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
+                                <button class="text-yellow-500 hover:text-yellow-700 mr-3 btn-editar-carrera" th:attr="data-id=${carrera.id}">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                                <button class="text-red-500 hover:text-red-700 btn-eliminar-carrera" th:attr="data-id=${carrera.id}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            const tableBody = document.getElementById('carrera-table-body');
+            const genericModal = document.getElementById('generic-modal');
+            const genericModalContent = document.getElementById('generic-modal-content');
+
+            // Function to attach event listeners to the dynamically loaded form
+            function attachCarreraFormListeners() {
+                const carreraForm = document.getElementById('carrera-form');
+                const closeCarreraModalContentBtn = document.getElementById('close-carrera-modal-content');
+
+                if (carreraForm) {
+                    carreraForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(carreraForm);
+                        const url = carreraForm.action;
+
+                        try {
+                            const response = await fetch(url, {
+                                method: 'POST',
+                                body: new URLSearchParams(formData)
+                            });
+
+                            if (response.ok) {
+                                window.showAlertModal('Carrera guardada correctamente.');
+                                genericModal.classList.add('hidden');
+                                genericModal.classList.remove('flex');
+                                // Recargar la tabla de carreras
+                                document.getElementById('load-gestion-academica-sidebar').click();
+                            } else {
+                                window.showAlertModal('Error al guardar la carrera.');
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            window.showAlertModal('Ocurrió un error al guardar la carrera.');
+                        }
+                    });
+                }
+
+                if (closeCarreraModalContentBtn) {
+                    closeCarreraModalContentBtn.addEventListener('click', () => {
+                        genericModal.classList.add('hidden');
+                        genericModal.classList.remove('flex');
+                    });
+                }
+            }
+
+            if (tableBody) {
+                tableBody.addEventListener('click', async (e) => {
+                    const deleteButton = e.target.closest('.btn-eliminar-carrera');
+                    const editButton = e.target.closest('.btn-editar-carrera');
+
+                    if (deleteButton) {
+                        const carreraId = deleteButton.dataset.id;
+                        window.showConfirmationModal(`¿Estás seguro de que deseas eliminar la carrera con ID ${carreraId}?`, async () => {
+                            try {
+                                const response = await fetch(`/gestionacademica/carrera/eliminar/${carreraId}`, {
+                                    method: 'DELETE',
+                                });
+                                if (response.ok) {
+                                    window.showAlertModal('Carrera eliminada correctamente.');
+                                    // Reload the view by clicking a sidebar link that loads the parent view
+                                    document.getElementById('load-gestion-academica-sidebar').click();
+                                } else {
+                                    window.showAlertModal('Error al eliminar la carrera.');
+                                }
+                            } catch (error) {
+                                console.error('Error:', error);
+                                window.showAlertModal('Ocurrió un error al eliminar la carrera.');
+                            }
+                        });
+                    }
+
+                    if (editButton) {
+                        const carreraId = editButton.dataset.id;
+                        try {
+                            const response = await fetch(`/gestionacademica/carrera/editar/${carreraId}`);
+                            if (response.ok) {
+                                genericModalContent.innerHTML = await response.text();
+                                genericModal.classList.remove('hidden');
+                                genericModal.classList.add('flex');
+                                attachCarreraFormListeners(); // Attach listeners after content is loaded
+                            } else {
+                                window.showAlertModal('Error al cargar el formulario de edición.');
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            window.showAlertModal('Ocurrió un error al cargar el formulario de edición.');
+                        }
+                    }
+                });
+            }
+
+            if (genericModal) {
+                genericModal.addEventListener('click', (e) => {
+                    if (e.target === genericModal) {
+                        genericModal.classList.add('hidden');
+                        genericModal.classList.remove('flex');
+                    }
+                });
+            }
+
+            const openCarreraModalBtn = document.getElementById('open-carrera-modal-btn');
+            if (openCarreraModalBtn) {
+                openCarreraModalBtn.addEventListener('click', async () => {
+                    try {
+                        const response = await fetch('/gestionacademica/carrera/nueva');
+                        if (response.ok) {
+                            genericModalContent.innerHTML = await response.text();
+                            genericModal.classList.remove('hidden');
+                            genericModal.classList.add('flex');
+                            attachCarreraFormListeners(); // Attach listeners after content is loaded
+                        } else {
+                            window.showAlertModal('Error al cargar el formulario de creación de carrera.');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        window.showAlertModal('Ocurrió un error al cargar el formulario de creación de carrera.');
+                    }
+                });
+            }
+        })();
+    </script>
+</div>
+</body>
+</html>

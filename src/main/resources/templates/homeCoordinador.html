@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Académico - Coordinador</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/usuarios.css" th:href="@{/css/usuarios.css}">
+  <style>
+    .sidebar-scroll::-webkit-scrollbar { width: 5px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 10px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: #2d3748; }
+    #notification-panel {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        width: 300px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        z-index: 50;
+        color: #000;
+    }
+    .modal {
+        transition: opacity 0.25s ease;
+    }
+    /* Toast Notification Styles */
+    #toast-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 1050;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .toast {
+        padding: 1rem 1.5rem;
+        border-radius: 0.5rem;
+        color: white;
+        font-size: 0.9rem;
+        font-weight: 500;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        opacity: 0;
+        transform: translateY(20px);
+        transition: all 0.3s ease-out;
+    }
+    .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .toast.success {
+        background-color: #38a169; /* green-600 */
+    }
+    .toast.error {
+        background-color: #e53e3e; /* red-600 */
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div id="toast-container"></div>
+
+<div class="flex h-screen bg-gray-200">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-800 text-white flex-shrink-0 sidebar-scroll overflow-y-auto">
+        <div class="p-4 border-b border-gray-700">
+            <div class="flex items-center">
+                <i class="fas fa-user-tie text-2xl text-green-400"></i>
+                <div class="ml-3">
+                    <h1 class="text-lg font-bold">SGAAC</h1>
+                    <p class="text-xs text-gray-400">Panel del Coordinador</p>
+                </div>
+            </div>
+        </div>
+        <nav class="mt-4">
+            <ul class="flex flex-col space-y-2 px-2">
+                <li><a href="#" id="dashboard-link" class="flex items-center py-2 px-4 bg-gray-700 rounded-md text-white"><i class="fas fa-tachometer-alt w-6"></i><span class="ml-3">Dashboard</span></a></li>
+                <li><a href="#" id="load-postulaciones-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-file-import w-6"></i><span class="ml-3">Postulaciones</span></a></li>
+                <li><a href="#" id="load-evaluar-meritos-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-star w-6"></i><span class="ml-3">Evaluar Méritos</span></a></li>
+                <li><a href="#" id="load-evaluar-pruebas-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-check-double w-6"></i><span class="ml-3">Evaluar Pruebas</span></a></li>
+                <li><a href="#" id="load-ayudantias-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-user-check w-6"></i><span class="ml-3">Ayudantías</span></a></li>
+                <li><a href="#" id="load-reportes-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-chart-line w-6"></i><span class="ml-3">Reportes</span></a></li>
+                <li><a href="#" id="load-configuracion-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-cog w-6"></i><span class="ml-3">Configuración</span></a></li>
+                <li class="pt-4 mt-4 border-t border-gray-700"><a href="#" id="logout-link" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-sign-out-alt w-6"></i><span class="ml-3">Cerrar Sesión</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Content wrapper -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="bg-white shadow z-10">
+            <div class="container mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="text-xl font-semibold text-gray-700">Dashboard del Coordinador</div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button id="notification-bell" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                                <i class="fas fa-bell text-xl"></i>
+                            </button>
+                            <div id="notification-panel" class="p-4">
+                                <p class="font-bold">¡Bienvenido al sistema!</p>
+                                <hr class="my-2"/>
+                                <div id="notifications-list">
+                                    <p class="text-sm text-gray-500">No hay notificaciones nuevas.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold" th:text="${userInitial}">C</div>
+                            <span class="ml-3 text-gray-700" th:text="${username}">Coordinador</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-6">
+            <!-- Contenedor para Alertas Flash -->
+            <div class="container mx-auto">
+                <div th:if="${successMessage}" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-4" role="alert">
+                    <p class="font-bold">Éxito</p>
+                    <p th:text="${successMessage}"></p>
+                </div>
+                <div th:if="${errorMessage}" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+                    <p class="font-bold">Error</p>
+                    <p th:text="${errorMessage}"></p>
+                </div>
+            </div>
+
+            <div id="dashboard-content" class="container mx-auto">
+                <!-- Tarjetas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-green-500 text-white rounded-full p-3"><i class="fas fa-bullhorn text-2xl"></i></div>
+                        <div class="ml-4"><h3 class="text-3xl font-bold">0</h3><p class="text-gray-500">Convocatorias Abiertas</p></div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-yellow-500 text-white rounded-full p-3"><i class="fas fa-file-import text-2xl"></i></div>
+                        <div class="ml-4"><h3 class="text-3xl font-bold">0</h3><p class="text-gray-500">Postulaciones Pendientes</p></div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-green-500 text-white rounded-full p-3"><i class="fas fa-user-graduate text-2xl"></i></div>
+                        <div class="ml-4"><h3 class="text-3xl font-bold">0</h3><p class="text-gray-500">Ayudantes Activos</p></div>
+                    </div>
+                </div>
+
+                <!-- Secciones -->
+                <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold">Actividad Reciente</h2>
+                            <a href="#" class="text-green-500 hover:underline">Ver todo <i class="fas fa-chevron-right text-xs"></i></a>
+                        </div>
+                        <p class="text-gray-600">Aquí se mostrará la actividad reciente relevante para el coordinador.</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold">Accesos Rápidos</h2>
+                             <a href="#" id="load-convocatorias-main" class="text-green-500 hover:underline">Gestionar Convocatorias <i class="fas fa-arrow-right text-xs"></i></a>
+                        </div>
+                        <p class="text-gray-600">Enlaces para gestionar convocatorias, postulaciones y más.</p>
+                    </div>
+                </div>
+                
+                <!-- Footer dentro del contenido scrolleable -->
+                <footer class="mt-8 text-center text-gray-600 text-sm">
+                    © 2025 SGAAC. Todos los derechos reservados.
+                </footer>
+            </div>
+            <div id="convocatorias-panel" class="container mx-auto hidden"></div>
+            <div id="publicar-panel" class="container mx-auto hidden"></div>
+            <div id="postulaciones-panel" class="container mx-auto hidden"></div>
+            <div id="evaluar-meritos-panel" class="container mx-auto hidden"></div>
+            <div id="evaluar-pruebas-panel" class="container mx-auto hidden"></div>
+            <div id="ayudantias-panel" class="container mx-auto hidden"></div>
+            <div id="reportes-panel" class="container mx-auto hidden"></div>
+            <div id="configuracion-panel" class="container mx-auto hidden"></div>
+            <div id="pruebas-oposicion-panel" class="container mx-auto hidden"></div>
+        </main>
+    </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div id="logout-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Confirmar Cierre de Sesión</h2>
+      <p class="text-gray-600 mb-6">¿Estás seguro de que deseas cerrar sesión?</p>
+      <div class="flex justify-end space-x-4">
+        <button id="cancel-logout-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cancelar</button>
+        <button id="confirm-logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Cerrar Sesión</button>
+      </div>
+    </div>
+</div>
+
+<script>
+  // Toast Notification Function
+  function showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        toast.addEventListener('transitionend', () => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        });
+    }, 4000);
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const logoutLink = document.getElementById('logout-link');
+    const logoutModal = document.getElementById('logout-modal');
+    const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
+    const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
+
+    function showLogoutModal() {
+        logoutModal.classList.remove('hidden');
+        logoutModal.classList.add('flex');
+    }
+
+    function hideLogoutModal() {
+        logoutModal.classList.add('hidden');
+        logoutModal.classList.remove('flex');
+    }
+
+    logoutLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLogoutModal();
+    });
+
+    cancelLogoutBtn.addEventListener('click', hideLogoutModal);
+
+    confirmLogoutBtn.addEventListener('click', () => {
+        window.location.href = '/logout';
+    });
+
+    logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) {
+            hideLogoutModal();
+        }
+    });
+
+    const bell = document.getElementById('notification-bell');
+    const panel = document.getElementById('notification-panel');
+
+    bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!panel.contains(e.target)) {
+            panel.style.display = 'none';
+        }
+    });
+
+    // --- SCRIPT REFACTOR FOR SIDEBAR HIGHLIGHTING ---
+
+    const dashboardContent = document.getElementById('dashboard-content');
+    const panels = {
+        'convocatorias': document.getElementById('convocatorias-panel'),
+        'publicar': document.getElementById('publicar-panel'),
+        'postulaciones': document.getElementById('postulaciones-panel'),
+        'evaluar-meritos': document.getElementById('evaluar-meritos-panel'),
+        'evaluar-pruebas': document.getElementById('evaluar-pruebas-panel'),
+        'ayudantias': document.getElementById('ayudantias-panel'),
+        'reportes': document.getElementById('reportes-panel'),
+        'configuracion': document.getElementById('configuracion-panel'),
+        'pruebas-oposicion': document.getElementById('pruebas-oposicion-panel')
+    };
+
+    const sidebarLinkElements = {
+        'dashboard': document.getElementById('dashboard-link'),
+        'convocatorias': document.getElementById('load-convocatorias-sidebar'), // This ID might not exist, but let's keep it for consistency
+        'publicar': document.getElementById('load-publicar-sidebar'),
+        'postulaciones': document.getElementById('load-postulaciones-sidebar'),
+        'evaluar-meritos': document.getElementById('load-evaluar-meritos-sidebar'),
+        'evaluar-pruebas': document.getElementById('load-evaluar-pruebas-sidebar'),
+        'ayudantias': document.getElementById('load-ayudantias-sidebar'),
+        'reportes': document.getElementById('load-reportes-sidebar'),
+        'configuracion': document.getElementById('load-configuracion-sidebar')
+    };
+    
+    const mainLinkConvocatorias = document.getElementById('load-convocatorias-main');
+    const baseUrl = window.location.pathname.replace(/\/$/, '');
+
+    function setActiveSidebarLink(viewName) {
+        Object.values(sidebarLinkElements).forEach(link => link && link.classList.remove('bg-gray-700'));
+        
+        let activeView = viewName;
+        if (viewName && (viewName.startsWith('postulacion-') || viewName === 'revisar-postulaciones' || viewName === 'pruebas-oposicion')) {
+            activeView = 'postulaciones';
+        }
+        
+        const activeLink = sidebarLinkElements[activeView];
+        if (activeLink) {
+            activeLink.classList.add('bg-gray-700');
+        }
+    }
+
+    function hideAllPanels() {
+        dashboardContent.classList.add('hidden');
+        Object.values(panels).forEach(p => p.classList.add('hidden'));
+    }
+
+    function showDashboard(pushState = true) {
+        hideAllPanels();
+        dashboardContent.classList.remove('hidden');
+        if (pushState) {
+            history.pushState({ view: 'dashboard' }, '', baseUrl || '/');
+        }
+        document.querySelector('header .text-xl').textContent = 'Dashboard del Coordinador';
+        setActiveSidebarLink('dashboard');
+    }
+
+    async function fetchAndShow(panel, url, title, view, pushState) {
+        if (pushState) {
+            history.pushState({ view: view }, "", `?view=${view}`);
+        }
+
+        hideAllPanels();
+        panel.innerHTML = '<p class="text-center p-8">Cargando...</p>';
+        panel.classList.remove('hidden');
+        document.querySelector('header .text-xl').textContent = title;
+
+        try {
+            const response = await fetch(url, { headers: { 'X-Partial': 'true' } });
+            if (!response.ok) throw new Error(`Error en la red: ${response.statusText}`);
+            const html = await response.text();
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+
+            panel.innerHTML = '';
+            Array.from(tempDiv.children).forEach(child => {
+                if (child.tagName.toLowerCase() !== 'script') {
+                    panel.appendChild(child.cloneNode(true));
+                }
+            });
+
+            tempDiv.querySelectorAll('script').forEach(script => {
+                const newScript = document.createElement('script');
+                Array.from(script.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+                newScript.textContent = script.textContent;
+                document.body.appendChild(newScript).parentNode.removeChild(newScript);
+            });
+
+        } catch (error) {
+            console.error(`Fallo al cargar el fragmento de ${view}:`, error);
+            panel.innerHTML = '<div class="p-4 text-red-700 bg-red-100 border border-red-400 rounded">Error al cargar el contenido.</div>';
+        }
+    }
+
+    const views = {
+        'convocatorias': { panel: panels.convocatorias, url: '/coordinador/convocatorias?fragment=true', title: 'Gestión de Convocatorias' },
+        'postulaciones': { panel: panels.postulaciones, url: '/coordinador/postulaciones?fragment=true', title: 'Gestión de Postulaciones' },
+        'evaluar-meritos': { panel: panels['evaluar-meritos'], url: '/coordinador/evaluar-meritos?fragment=true', title: 'Evaluar Méritos' },
+        'evaluar-pruebas': { panel: panels['evaluar-pruebas'], url: '/coordinador/evaluar-pruebas?fragment=true', title: 'Evaluar Pruebas de Oposición' },
+        'ayudantias': { panel: panels.ayudantias, url: '/coordinador/ayudantias?fragment=true', title: 'Gestión de Ayudantías' },
+        'reportes': { panel: panels.reportes, url: '/coordinador/reportes?fragment=true', title: 'Reportes' },
+        'configuracion': { panel: panels.configuracion, url: '/coordinador/configuracion?fragment=true', title: 'Configuración' },
+        'postulacion-crear-form': { panel: panels.postulaciones, url: '/coordinador/postulaciones/crear?fragment=true', title: 'Crear Nueva Postulación' },
+        'revisar-postulaciones': { panel: panels.postulaciones, url: '/coordinador/postulaciones/revisar?fragment=true', title: 'Revisar Postulaciones' },
+        'pruebas-oposicion': { panel: panels['pruebas-oposicion'], url: '/coordinador/pruebas-oposicion?fragment=true', title: 'Pruebas de Oposición' }
+    };
+
+    function handleLinkClick(viewName, pushState) {
+        const view = views[viewName];
+        if (view) {
+            setActiveSidebarLink(viewName);
+            fetchAndShow(view.panel, view.url, view.title, viewName, pushState);
+        }
+    }
+
+    Object.entries(sidebarLinkElements).forEach(([viewName, linkElement]) => {
+        if (linkElement) {
+            linkElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (viewName === 'dashboard') {
+                    showDashboard(true);
+                } else {
+                    handleLinkClick(viewName, true);
+                }
+            });
+        }
+    });
+    
+    if(mainLinkConvocatorias) {
+        mainLinkConvocatorias.addEventListener('click', (e) => { e.preventDefault(); handleLinkClick('convocatorias', true); });
+    }
+
+    panels.postulaciones.addEventListener('click', (e) => {
+        const cardCrear = e.target.closest('#card-crear-postulacion');
+        if (cardCrear) {
+            e.preventDefault();
+            handleLinkClick('postulacion-crear-form', true);
+            return;
+        }
+
+        const cardRevisar = e.target.closest('#card-revisar-postulaciones');
+        if (cardRevisar) {
+            e.preventDefault();
+            handleLinkClick('revisar-postulaciones', true);
+            return;
+        }
+
+        const cardPruebas = e.target.closest('#card-pruebas-oposicion');
+        if (cardPruebas) {
+            e.preventDefault();
+            handleLinkClick('pruebas-oposicion', true);
+            return;
+        }
+    });
+
+    window.addEventListener('popstate', (e) => {
+        const viewName = e.state ? e.state.view : 'dashboard';
+        if (views[viewName]) {
+            handleLinkClick(viewName, false);
+        } else {
+            showDashboard(false);
+        }
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
+    if (view && views[view]) {
+        handleLinkClick(view, false);
+    } else {
+        if(view) {
+            history.replaceState({ view: 'dashboard' }, '', window.location.pathname);
+        }
+        showDashboard(false);
+    }
+  });
+</script>
+</body>
+</html>

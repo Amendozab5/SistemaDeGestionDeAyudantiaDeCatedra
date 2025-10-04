@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Historial de Plazas Aprobadas</h2>
+    
+    <div th:if="${plazasAprobadas.isEmpty()}" class="bg-white rounded-lg shadow-md p-6 text-center">
+        <p class="text-gray-600">No hay plazas aprobadas en el historial.</p>
+    </div>
+
+    <div th:unless="${plazasAprobadas.isEmpty()}" class="bg-white rounded-lg shadow-md overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Convocatoria</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asignatura</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Docente</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cupos</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plaza Creada por</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <tr th:each="plaza : ${plazasAprobadas}">
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900 truncate max-w-xs" th:text="${plaza.convocatoriaTitulo}" th:title="${plaza.convocatoriaTitulo}"></div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm text-gray-900 truncate max-w-xs" th:text="${plaza.asignaturaNombre}" th:title="${plaza.asignaturaNombre}"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-500" th:text="${plaza.docenteNombre}"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900 text-center font-bold" th:text="${plaza.cupos}"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-500" th:text="${plaza.coordinadorNombre}"></div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

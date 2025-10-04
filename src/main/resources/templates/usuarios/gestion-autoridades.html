@@ -1,0 +1,372 @@
+<div class="container mx-auto px-4 py-8" th:fragment="content">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Gestión de Autoridades</h1>
+    <p class="text-gray-600 mb-4">Aquí podrás crear y gestionar las autoridades del sistema.</p>
+
+    <button id="open-modal-btn-auth" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Crear Autoridad
+    </button>
+
+    <div class="mt-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Lista de Autoridades</h2>
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cédula</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="autoridad-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Autoridad rows will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="autoridad-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modal-title-auth" class="text-2xl font-bold text-gray-800">Crear Nueva Autoridad</h2>
+                <button id="close-modal-btn-auth" class="text-gray-600 hover:text-gray-800 text-3xl font-bold">&times;</button>
+            </div>
+            <form id="autoridad-form">
+                <input type="hidden" id="autoridadId" name="autoridadId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="nombres-auth" class="block text-sm font-medium text-gray-700">Nombres</label>
+                        <input type="text" id="nombres-auth" name="nombres" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required>
+                    </div>
+                    <div>
+                        <label for="apellidos-auth" class="block text-sm font-medium text-gray-700">Apellidos</label>
+                        <input type="text" id="apellidos-auth" name="apellidos" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required>
+                    </div>
+                    <div>
+                        <label for="email-auth" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="email-auth" name="email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required>
+                    </div>
+                    <div>
+                        <label for="cedula-auth" class="block text-sm font-medium text-gray-700">Cédula</label>
+                        <input type="text" id="cedula-auth" name="cedula" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required>
+                    </div>
+                    <div>
+                        <label for="telefono-auth" class="block text-sm font-medium text-gray-700">Teléfono</label>
+                        <input type="tel" id="telefono-auth" name="telefono" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                    </div>
+                    <div>
+                        <label for="rol-auth" class="block text-sm font-medium text-gray-700">Rol</label>
+                        <select id="rol-auth" name="rol" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required>
+                            <option value="">Seleccione un rol</option>
+                            <option value="DOCENTE">Docente</option>
+                            <option value="DECANO">Decano</option>
+                            <option value="COORDINADOR">Coordinador</option>
+                        </select>
+                    </div>
+                    <div id="dynamic-fields-container" class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button type="button" id="cancel-btn-auth" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mr-2">Cancelar</button>
+                    <button id="submit-btn-auth" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Crear Autoridad</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const openModalBtn = document.getElementById('open-modal-btn-auth');
+            const closeModalBtn = document.getElementById('close-modal-btn-auth');
+            const cancelBtn = document.getElementById('cancel-btn-auth');
+            const modal = document.getElementById('autoridad-modal');
+            const autoridadForm = document.getElementById('autoridad-form');
+            const autoridadTableBody = document.getElementById('autoridad-table-body');
+            const modalTitle = document.getElementById('modal-title-auth');
+            const submitBtn = document.getElementById('submit-btn-auth');
+            const autoridadIdInput = document.getElementById('autoridadId');
+            const rolSelect = document.getElementById('rol-auth');
+            const dynamicFieldsContainer = document.getElementById('dynamic-fields-container');
+
+            async function loadAutoridades() {
+                try {
+                    const response = await fetch('/usuarios/autoridades');
+                    if (!response.ok) throw new Error('Error al cargar autoridades');
+                    const autoridades = await response.json();
+                    autoridadTableBody.innerHTML = '';
+                    autoridades.forEach(autoridad => {
+                        const row = document.createElement('tr');
+                        row.dataset.userId = autoridad.idUsuario;
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">${autoridad.nombres} ${autoridad.apellidos}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${autoridad.email}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${autoridad.cedula}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${autoridad.rol}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-indigo-600 hover:text-indigo-900 edit-btn-auth">Editar</button>
+                                <button class="text-red-600 hover:text-red-900 ml-4 toggle-active-btn-auth">${autoridad.activo ? 'Desactivar' : 'Activar'}</button>
+                                <button class="text-yellow-600 hover:text-yellow-900 ml-4 force-password-btn" title="Forzar cambio de contraseña"><i class="fas fa-key"></i></button>
+                            </td>
+                        `;
+                        autoridadTableBody.appendChild(row);
+                    });
+                } catch (error) {
+                    console.error(error);
+                    autoridadTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4">Error al cargar autoridades</td></tr>';
+                }
+            }
+
+            function showModal(editMode = false, user = null) {
+                autoridadForm.reset();
+                dynamicFieldsContainer.innerHTML = '';
+                if (editMode && user) {
+                    modalTitle.textContent = 'Editar Autoridad';
+                    submitBtn.textContent = 'Guardar Cambios';
+                    autoridadIdInput.value = user.idUsuario;
+                    document.getElementById('nombres-auth').value = user.nombres;
+                    document.getElementById('apellidos-auth').value = user.apellidos;
+                    document.getElementById('email-auth').value = user.email;
+                    document.getElementById('cedula-auth').value = user.cedula;
+                    document.getElementById('telefono-auth').value = user.telefono;
+                    rolSelect.value = user.rol;
+                    rolSelect.dispatchEvent(new Event('change'));
+                } else {
+                    modalTitle.textContent = 'Crear Nueva Autoridad';
+                    submitBtn.textContent = 'Crear Autoridad';
+                    autoridadIdInput.value = '';
+                }
+                modal.classList.remove('hidden');
+            }
+
+            function hideModal() {
+                modal.classList.add('hidden');
+            }
+
+            openModalBtn.addEventListener('click', () => showModal(false));
+            closeModalBtn.addEventListener('click', hideModal);
+            cancelBtn.addEventListener('click', hideModal);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideModal();
+                }
+            });
+
+            async function safeFetch(url) {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`Error fetching ${url}:`, errorText);
+                    throw new Error(`El servidor respondió con un error: ${response.status}`);
+                }
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const responseText = await response.text();
+                    console.error(`Respuesta no es JSON para ${url}:`, responseText);
+                    throw new TypeError("La respuesta del servidor no es JSON.");
+                }
+                return response.json();
+            }
+
+            rolSelect.addEventListener('change', async (event) => {
+                const selectedRol = event.target.value;
+                dynamicFieldsContainer.innerHTML = ''; // Clear previous dynamic fields
+
+                if (!selectedRol) return;
+
+                try {
+                    if (selectedRol === 'DECANO' || selectedRol === 'COORDINADOR' || selectedRol === 'DOCENTE') {
+                        const facultades = await safeFetch('/usuarios/facultades');
+                        const facultadSelectContainer = createSelect('Facultad', 'idFacultad', facultades.map(f => ({ value: f.id, text: f.nombre })));
+                        dynamicFieldsContainer.appendChild(facultadSelectContainer);
+
+                        const facultadSelect = facultadSelectContainer.querySelector('select');
+
+                        if (selectedRol === 'COORDINADOR' || selectedRol === 'DOCENTE') {
+                            const carreraSelectContainer = createSelect('Carrera', 'idCarrera', []);
+                            dynamicFieldsContainer.appendChild(carreraSelectContainer);
+                            const carreraSelect = carreraSelectContainer.querySelector('select');
+                            carreraSelect.disabled = true;
+
+                            facultadSelect.addEventListener('change', async (e) => {
+                                const facultadId = e.target.value;
+                                carreraSelect.innerHTML = '<option value="">Cargando...</option>';
+                                if (facultadId) {
+                                    try {
+                                        const carreras = await safeFetch(`/usuarios/carreras/facultad/${facultadId}`);
+                                        if (carreras.length > 0) {
+                                            populateSelect(carreraSelect, carreras.map(c => ({ value: c.id, text: c.carrera })));
+                                            carreraSelect.disabled = false;
+                                        } else {
+                                            carreraSelect.innerHTML = '<option value="">No hay carreras disponibles</option>';
+                                            carreraSelect.disabled = true;
+                                        }
+                                    } catch (error) {
+                                        console.error('Error fetching carreras:', error);
+                                        carreraSelect.innerHTML = '<option value="">Error al cargar</option>';
+                                        carreraSelect.disabled = true;
+                                    }
+                                } else {
+                                    carreraSelect.innerHTML = '<option value="">Seleccione una facultad primero</option>';
+                                    carreraSelect.disabled = true;
+                                }
+                            });
+                        }
+
+                        if (selectedRol === 'DOCENTE') {
+                            const asignaturas = await safeFetch('/usuarios/asignaturas/all');
+                            const asignaturaSelectContainer = createSelect('Asignatura', 'idAsignatura', asignaturas.map(a => ({ value: a.idAsignatura, text: a.nombre })));
+                            dynamicFieldsContainer.appendChild(asignaturaSelectContainer);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error creating dynamic fields:', error);
+                    dynamicFieldsContainer.innerHTML = `<p class="text-red-500">Error al cargar opciones: ${error.message}</p>`;
+                }
+            });
+
+            function createSelect(labelText, name, options) {
+                const div = document.createElement('div');
+                const label = document.createElement('label');
+                label.className = 'block text-sm font-medium text-gray-700';
+                label.textContent = labelText;
+                const select = document.createElement('select');
+                select.name = name;
+                select.id = name;
+                select.className = 'mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3';
+                select.required = true;
+                populateSelect(select, options);
+                div.appendChild(label);
+                div.appendChild(select);
+                return div;
+            }
+
+            function populateSelect(selectElement, options) {
+                selectElement.innerHTML = '<option value="">Seleccione una opción</option>';
+                options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.text;
+                    selectElement.appendChild(option);
+                });
+            }
+
+            autoridadForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const selectedRol = rolSelect.value;
+                if (selectedRol === 'DECANO' || selectedRol === 'COORDINADOR' || selectedRol === 'DOCENTE') {
+                    const facultadSelect = document.getElementById('idFacultad');
+                    if (!facultadSelect || !facultadSelect.value) {
+                        window.showAlertModal('Por favor, seleccione una facultad.');
+                        return;
+                    }
+                }
+                if (selectedRol === 'COORDINADOR' || selectedRol === 'DOCENTE') {
+                    const carreraSelect = document.getElementById('idCarrera');
+                    if (!carreraSelect || !carreraSelect.value) {
+                        window.showAlertModal('Por favor, seleccione una carrera.');
+                        return;
+                    }
+                }
+                if (selectedRol === 'DOCENTE') {
+                    const asignaturaSelect = document.getElementById('idAsignatura');
+                    if (!asignaturaSelect || !asignaturaSelect.value) {
+                        window.showAlertModal('Por favor, seleccione una asignatura.');
+                        return;
+                    }
+                }
+
+                const formData = new FormData(autoridadForm);
+                const data = Object.fromEntries(formData.entries());
+                const userId = autoridadIdInput.value;
+
+                const url = userId ? `/usuarios/autoridades/${userId}` : '/usuarios/crear-autoridad';
+                const method = userId ? 'PUT' : 'POST';
+
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        window.showAlertModal(userId ? 'Autoridad actualizada correctamente' : 'Autoridad creada correctamente');
+                        hideModal();
+                        loadAutoridades();
+                    } else {
+                        const errorText = await response.text();
+                        try {
+                            const errorJson = JSON.parse(errorText);
+                            window.showAlertModal(`Error: ${errorJson.message}`);
+                        } catch (e) {
+                            window.showAlertModal(`Error: ${errorText}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    window.showAlertModal('Ocurrió un error.');
+                }
+            });
+
+            autoridadTableBody.addEventListener('click', async (e) => {
+                const row = e.target.closest('tr');
+                if (!row) return;
+                const userId = row.dataset.userId;
+
+                if (e.target.classList.contains('toggle-active-btn-auth')) {
+                    try {
+                        const response = await fetch(`/usuarios/${userId}/toggle-activo`, { method: 'POST' });
+                        if (response.ok) {
+                            loadAutoridades();
+                        } else {
+                            window.showAlertModal('Error al cambiar el estado del usuario');
+                        }
+                    } catch (error) {
+                        console.error('Error al cambiar el estado:', error);
+                        window.showAlertModal('Ocurrió un error al cambiar el estado del usuario.');
+                    }
+                } else if (e.target.classList.contains('edit-btn-auth')) {
+                    try {
+                        const response = await fetch(`/usuarios/${userId}`);
+                        if (response.ok) {
+                            const user = await response.json();
+                            showModal(true, user);
+                        } else {
+                            window.showAlertModal('Error al obtener los datos del usuario');
+                        }
+                    } catch (error) {
+                        console.error('Error al obtener datos:', error);
+                        window.showAlertModal('Ocurrió un error al obtener los datos del usuario.');
+                    }
+                } else if (e.target.closest('.force-password-btn')) {
+                    window.showConfirmationModal(
+                        '¿Estás seguro de que deseas forzar a este usuario a cambiar su contraseña en el próximo inicio de sesión?',
+                        async () => {
+                            try {
+                                const response = await fetch(`/usuarios/${userId}/force-password-change`, { method: 'POST' });
+                                const result = await response.json();
+                                if (response.ok) {
+                                    window.showAlertModal(result.message);
+                                } else {
+                                    throw new Error(result.message || 'Error al forzar el cambio de contraseña');
+                                }
+                            } catch (error) {
+                                console.error('Error:', error);
+                                window.showAlertModal('Ocurrió un error: ' + error.message);
+                            }
+                        }
+                    );
+                }
+            });
+
+            loadAutoridades();
+        })();
+    </script>
+</div>

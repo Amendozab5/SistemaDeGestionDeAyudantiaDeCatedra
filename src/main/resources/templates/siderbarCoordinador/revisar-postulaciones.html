@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Revisión de Postulaciones</h1>
+    
+    <div th:if="${#maps.isEmpty(postulacionesPorConvocatoria)}" class="bg-white p-6 rounded-lg shadow-md text-center">
+        <p class="text-gray-600">No hay postulaciones para revisar en este momento.</p>
+    </div>
+
+    <div th:unless="${#maps.isEmpty(postulacionesPorConvocatoria)}" class="space-y-8">
+        <div th:each="entry : ${postulacionesPorConvocatoria}">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4" th:text="${entry.key}"></h2>
+            <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estudiante</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asignatura</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Documentos</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200 postulaciones-tbody">
+                        <th:block th:each="postulacion : ${entry.value}">
+                            <tr th:if="${postulacion.estadoPostulacion == 'EN_REVISION'}" th:id="'postulacion-row-' + ${postulacion.idPostulacion}">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900" th:text="${postulacion.estudianteNombre}"></div>
+                                    <div class="text-sm text-gray-500" th:text="${postulacion.estudianteEmail}"></div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900" th:text="${postulacion.asignaturaNombre}"></div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="status-badge px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                          th:text="${postulacion.estadoPostulacion}"
+                                          th:classappend="${postulacion.estadoPostulacion == 'EN_REVISION' ? 'bg-yellow-100 text-yellow-800' : 
+                                                           (postulacion.estadoPostulacion == 'APROBADO' ? 'bg-green-100 text-green-800' : 
+                                                           (postulacion.estadoPostulacion == 'RECHAZADO' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'))}">
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button type="button" class="btn-ver-documentos px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-full hover:bg-blue-600"
+                                            th:data-postulacion-id="${postulacion.idPostulacion}">
+                                        Ver Documentos
+                                    </button>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-2">
+                                        <button type="button" class="btn-aprobar px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded-full hover:bg-green-600 disabled:opacity-50"
+                                                th:data-id="${postulacion.idPostulacion}"
+                                                th:disabled="${postulacion.estadoPostulacion != 'EN_REVISION'}">Aprobar</button>
+                                        <button type="button" class="btn-open-reject-modal px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded-full hover:bg-red-600 disabled:opacity-50"
+                                                th:data-id="${postulacion.idPostulacion}"
+                                                th:disabled="${postulacion.estadoPostulacion != 'EN_REVISION'}">No Aprobar</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </th:block>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+  </div>
+
+  <!-- Modal para Ver Documentos -->
+  <div id="documentos-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-2xl">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Documentos de la Postulación</h3>
+        <div id="documentos-list" class="space-y-4">
+            <!-- Documentos se cargarán aquí -->
+        </div>
+        <div class="flex justify-end space-x-4 mt-6">
+            <button type="button" class="btn-close-documentos-modal bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cerrar</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- Modal para Rechazar Postulación -->
+  <div id="reject-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-lg">
+      <h3 class="text-xl font-bold text-gray-800 mb-4">Motivo del Rechazo</h3>
+      
+      <form id="reject-form">
+        <input type="hidden" id="reject-postulacion-id" name="postulacionId">
+        <div class="py-4">
+          <label for="motivo-rechazo" class="block text-sm font-medium text-gray-700">Motivo del Rechazo</label>
+          <textarea id="motivo-rechazo" name="motivoRechazo" rows="4" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-red-500 focus:border-red-500 sm:text-sm" placeholder="Escribe aquí por qué el estudiante no fue seleccionado..."></textarea>
+        </div>
+      </form>
+
+      <div class="flex justify-end space-x-4 mt-6">
+        <button type="button" class="btn-cancel-reject bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cancelar</button>
+        <button type="submit" form="reject-form" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Confirmar Rechazo</button>
+      </div>
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    /*<![CDATA[*/
+    (function() { 
+        const postulacionesPorConvocatoria = /*[[${postulacionesPorConvocatoria}]]*/ {};
+        const postulaciones = Object.values(postulacionesPorConvocatoria).flat();
+        const tbodies = document.querySelectorAll('.postulaciones-tbody');
+        if (!tbodies.length) return;
+
+        const rejectModal = document.getElementById('reject-modal');
+        const rejectPostulacionIdInput = document.getElementById('reject-postulacion-id');
+        const rejectForm = document.getElementById('reject-form');
+        const motivoRechazoTextarea = document.getElementById('motivo-rechazo');
+
+        const documentosModal = document.getElementById('documentos-modal');
+        const documentosList = document.getElementById('documentos-list');
+
+        const updateApproveButtonState = (row) => {
+            const approveBtn = row.querySelector('.btn-aprobar');
+            const statusBadge = row.querySelector('.status-badge');
+            
+            if (!approveBtn || !statusBadge || statusBadge.textContent.trim() !== 'EN_REVISION') {
+                return;
+            }
+
+            const postulacionId = approveBtn.dataset.id;
+            const postulacion = postulaciones.find(p => p.idPostulacion == postulacionId);
+            if (!postulacion || !postulacion.documentos) return;
+
+            const allChecked = postulacion.documentos.every(doc => doc.esValido);
+            
+            approveBtn.disabled = !allChecked;
+        };
+
+        const handleAction = async (id, action, row) => {
+            const url = `/coordinador/postulaciones/${id}/${action}`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf_token"]')?.content
+                    }
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Ocurrió un error.');
+
+                const statusBadge = row.querySelector('.status-badge');
+                const approveBtn = row.querySelector('.btn-aprobar');
+                const rejectBtn = row.querySelector('.btn-open-reject-modal');
+
+                if (action === 'aprobar') {
+                    statusBadge.textContent = 'APROBADO';
+                    statusBadge.className = 'status-badge px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800';
+                }
+
+                if(approveBtn) approveBtn.disabled = true;
+                if(rejectBtn) rejectBtn.disabled = true;
+
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        };
+
+        const handleRejection = async (id, motivo, row) => {
+            const url = `/coordinador/postulaciones/${id}/rechazar`;
+            try {
+                const csrfToken = document.querySelector('meta[name="_csrf_token"]')?.content;
+                const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+                const headers = {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                };
+                if (csrfToken && csrfHeader) {
+                    headers[csrfHeader] = csrfToken;
+                }
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify({ motivo: motivo })
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Ocurrió un error.');
+
+                const statusBadge = row.querySelector('.status-badge');
+                const approveBtn = row.querySelector('.btn-aprobar');
+                const rejectBtn = row.querySelector('.btn-open-reject-modal');
+
+                statusBadge.textContent = 'RECHAZADO';
+                statusBadge.className = 'status-badge px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800';
+
+                if(approveBtn) approveBtn.disabled = true;
+                if(rejectBtn) rejectBtn.disabled = true;
+
+                rejectModal.classList.add('hidden');
+                rejectModal.classList.remove('flex');
+                motivoRechazoTextarea.value = '';
+
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
+        };
+
+        rejectForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const id = rejectPostulacionIdInput.value;
+            const motivo = motivoRechazoTextarea.value;
+            const row = document.getElementById(`postulacion-row-${id}`);
+            if (motivo.trim() === '') {
+                alert('Por favor, ingrese un motivo para el rechazo.');
+                return;
+            }
+            handleRejection(id, motivo, row);
+        });
+
+        tbodies.forEach(tbody => {
+            tbody.addEventListener('click', function(event) {
+                const approveBtn = event.target.closest('.btn-aprobar');
+                if (approveBtn && !approveBtn.disabled) {
+                    const row = approveBtn.closest('tr');
+                    const id = approveBtn.dataset.id;
+                    const postulacion = postulaciones.find(p => p.idPostulacion == id);
+                    const allChecked = postulacion.documentos.every(doc => doc.esValido);
+
+                    if (postulacion.documentos.length > 0 && !allChecked) {
+                        alert('No se puede aprobar la postulación. Por favor, valide todos los documentos requeridos.');
+                        return;
+                    }
+
+                    handleAction(id, 'aprobar', row);
+                }
+
+                const openRejectModalBtn = event.target.closest('.btn-open-reject-modal');
+                if (openRejectModalBtn && !openRejectModalBtn.disabled) {
+                    const id = openRejectModalBtn.dataset.id;
+                    rejectPostulacionIdInput.value = id;
+                    rejectModal.classList.remove('hidden');
+                    rejectModal.classList.add('flex');
+                }
+
+                const verDocumentosBtn = event.target.closest('.btn-ver-documentos');
+                if (verDocumentosBtn) {
+                    const postulacionId = verDocumentosBtn.dataset.postulacionId;
+                    const postulacion = postulaciones.find(p => p.idPostulacion == postulacionId);
+                    if (postulacion && postulacion.documentos) {
+                        documentosList.innerHTML = ''; // Limpiar lista
+                        postulacion.documentos.forEach(doc => {
+                            const docElement = document.createElement('div');
+                            docElement.className = 'flex items-center space-x-2';
+                            docElement.innerHTML = `
+                                <div class="flex items-center space-x-2 w-full">
+                                    <input type="checkbox" class="doc-checkbox h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                           ${doc.esValido ? 'checked' : ''}
+                                           data-postulacion-id="${postulacion.idPostulacion}"
+                                           data-documento-id="${doc.id}"
+                                           data-tipo-documento="${doc.tipoDocumento}">
+                                    <span class="text-sm font-medium text-gray-700 w-1/2">${doc.requisito.descripcion}</span>
+                                    <a href="/uploads/${doc.rutaArchivo}" target="_blank" class="text-blue-600 hover:text-blue-900 flex items-center justify-end w-1/2" title="Ver Documento">
+                                        <i class="fas fa-file-alt fa-lg"></i> <span class="ml-2 text-xs">Ver Documento</span>
+                                    </a>
+                                </div>
+                            `;
+                            documentosList.appendChild(docElement);
+                        });
+                        documentosModal.classList.remove('hidden');
+                        documentosModal.classList.add('flex');
+                    }
+                }
+            });
+        });
+
+        const cancelRejectBtn = document.querySelector('.btn-cancel-reject');
+        if(cancelRejectBtn) {
+            cancelRejectBtn.addEventListener('click', () => {
+                rejectModal.classList.add('hidden');
+                rejectModal.classList.remove('flex');
+            });
+        }
+        rejectModal.addEventListener('click', (e) => {
+            if (e.target === rejectModal) {
+                rejectModal.classList.add('hidden');
+                rejectModal.classList.remove('flex');
+            }
+        });
+
+        const closeDocumentosModalBtn = document.querySelector('.btn-close-documentos-modal');
+        if(closeDocumentosModalBtn) {
+            closeDocumentosModalBtn.addEventListener('click', () => {
+                documentosModal.classList.add('hidden');
+                documentosModal.classList.remove('flex');
+            });
+        }
+        documentosModal.addEventListener('click', (e) => {
+            if (e.target === documentosModal) {
+                documentosModal.classList.add('hidden');
+                documentosModal.classList.remove('flex');
+            }
+        });
+
+        const handleCheckboxChange = async (checkbox) => {
+            const postulacionId = checkbox.dataset.postulacionId;
+            const tipoDocumento = checkbox.dataset.tipoDocumento;
+            const esValido = checkbox.checked;
+
+            const url = '/coordinador/postulaciones/documento/validar';
+            
+            const csrfToken = document.querySelector('meta[name="_csrf_token"]')?.content;
+            const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+            const headers = {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            };
+            if (csrfToken && csrfHeader) {
+                headers[csrfHeader] = csrfToken;
+            }
+
+            const formData = new URLSearchParams();
+            formData.append('postulacionId', postulacionId);
+            formData.append('tipoDocumento', tipoDocumento);
+            formData.append('esValido', esValido);
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || 'Ocurrió un error al actualizar el documento.');
+                
+                console.log(result.message);
+                // Actualizar el estado en el objeto de postulaciones
+                const postulacion = postulaciones.find(p => p.idPostulacion == postulacionId);
+                if(postulacion) {
+                    const doc = postulacion.documentos.find(d => d.tipoDocumento === tipoDocumento);
+                    if(doc) {
+                        doc.esValido = esValido;
+                    }
+                }
+
+                updateApproveButtonState(document.getElementById(`postulacion-row-${postulacionId}`));
+
+            } catch (error) {
+                console.error('Error al validar documento:', error);
+                alert(`Error: ${error.message}`);
+                checkbox.checked = !esValido;
+            }
+        };
+
+        documentosList.addEventListener('change', function(event) {
+            const checkbox = event.target.closest('.doc-checkbox');
+            if (checkbox) {
+                handleCheckboxChange(checkbox);
+            }
+        });
+
+        document.querySelectorAll('tbody').forEach(tbody => {
+            tbody.querySelectorAll('tr').forEach(updateApproveButtonState);
+        });
+
+    })();
+    /*]]>*/
+  </script>
+</div>
+
+</body>
+</html>

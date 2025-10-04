@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+    <div class="grid grid-cols-1 gap-8">
+        <!-- Columna de Plazas -->
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Plazas Disponibles para Postulación</h2>
+            <div class="space-y-6">
+                <div th:if="${#maps.isEmpty(plazasPorConvocatoria)}" class="text-center py-10 px-6 bg-white rounded-lg shadow-md">
+                    <i class="fas fa-info-circle text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">No hay plazas disponibles para postulación en este momento.</p>
+                </div>
+
+                <div th:each="entry : ${plazasPorConvocatoria.entrySet()}">
+                    <h3 class="text-xl font-semibold text-gray-700 mb-3" th:text="${entry.key}"></h3>
+                    <div class="space-y-4">
+                        <div th:each="plaza : ${entry.value}" class="bg-white p-5 rounded-lg shadow-md flex items-center justify-between">
+                            <div>
+                                <h4 class="text-lg font-semibold text-indigo-700" th:text="${plaza.asignaturaNombre}"></h4>
+                                <p class="text-sm text-gray-600" th:text="${plaza.carreraNombre}"></p>
+                                <p class="text-xs text-gray-500 mt-1" th:text="${plaza.periodo}"></p>
+                            </div>
+                            <button class="open-modal-btn bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg"
+                                    th:data-plaza-id="${plaza.plazaId}"
+                                    th:data-asignatura-nombre="${plaza.asignaturaNombre}">
+                                Postular
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Postulación -->
+    <div id="postulacion-modal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl transform scale-95 transition-transform duration-300">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Confirmar Postulación</h2>
+            <p class="text-gray-600 mb-6">Estás a punto de postularte para la ayudantía de: <strong id="modal-asignatura-nombre" class="text-indigo-700"></strong>.</p>
+            
+            <form th:action="@{/estudiante/postulacion/crear}" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="plazaId" id="modal-plaza-id">
+                
+                <div class="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
+                    <th:block th:each="req, iterStat : ${requisitos}" th:if="${req.tipo == 'REGLAMENTARIO' or req.tipo == 'DOCUMENTO_OBLIGATORIO' or req.tipo == 'DOCUMENTO_OPCIONAL'}">
+                        <div>
+                            <label th:for="${'file-' + req.id}" class="block text-sm font-medium text-gray-700">
+                                <span th:text="${iterStat.count + '. ' + req.descripcion}"></span>
+                                <span th:if="${req.tipo == 'DOCUMENTO_OPCIONAL'}" class="text-xs font-normal text-gray-500">(Opcional)</span>
+                            </label>
+                            <input type="file" th:name="${req.id}" th:id="${'file-' + req.id}" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" th:required="${req.tipo == 'DOCUMENTO_OBLIGATORIO' or req.tipo == 'REGLAMENTARIO'}">
+                            <a th:if="${req.urlPlantilla}" th:href="@{${req.urlPlantilla}}" target="_blank" class="text-sm text-indigo-600 hover:underline">Descargar formato aquí <i class="fas fa-download ml-1"></i></a>
+                        </div>
+                    </th:block>
+
+                    <!-- Sección de Documentos para Méritos -->
+                    <div class="mt-6 pt-4 border-t">
+                        <h4 class="text-md font-semibold text-gray-800 mb-2">Documentos para Evaluación de Méritos</h4>
+                        <p class="text-xs text-gray-500 mb-4">Adjunta los documentos que respalden tus méritos. Estos son opcionales pero suman puntos.</p>
+                        
+                        <th:block th:each="criterio, iterStat : ${criteriosMerito}">
+                            <div class="mb-4">
+                                <label th:for="${'merito-file-' + criterio.id}" class="block text-sm font-medium text-gray-700">
+                                    <span th:text="${criterio.descripcion}"></span>
+                                    <span class="text-xs font-normal text-gray-500" th:text="' (Máx. ' + ${criterio.puntosMaximos} + ' puntos)'"></span>
+                                </label>
+                                <input type="file" th:name="${'merito-' + criterio.id}" th:id="${'merito-file-' + criterio.id}" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                            </div>
+                        </th:block>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-4 mt-8">
+                    <button id="cancel-btn" type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Cancelar</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg">Enviar Postulación</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,47 @@
+<div th:fragment="content">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Título y Subtítulo -->
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-800">Gestión de Actividades</h1>
+            <p class="text-gray-600 mt-2">Seleccione la acción que desea realizar en las actividades de la asignatura.</p>
+        </div>
+
+        <!-- Contenedor de Tarjetas del Menú -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- Card: Registrar / Subir Actividad -->
+            <a href="/homeEstudiante?view=registrar-actividad" class="block text-current no-underline">
+                <div id="card-registrar-actividad" class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer h-full">
+                    <div class="text-blue-500 mb-4">
+                        <i class="fas fa-upload fa-3x"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Registrar / Subir Actividad</h3>
+                    <p class="text-gray-600 text-sm">Cargue nuevas tareas o actividades para los estudiantes.</p>
+                </div>
+            </a>
+
+            <!-- Card: Mis Actividades Subidas -->
+            <a href="/homeEstudiante?view=ver-actividades" class="block text-current no-underline">
+                <div id="card-ver-actividades" class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer h-full">
+                    <div class="text-green-500 mb-4">
+                        <i class="fas fa-list-alt fa-3x"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Mis Actividades Subidas</h3>
+                    <p class="text-gray-600 text-sm">Vea y gestione las actividades que ha subido.</p>
+                </div>
+            </a>
+
+            <!-- Card: Ver Actividades de Compañeros -->
+            <a href="/homeEstudiante?view=proximas-entregas" class="block text-current no-underline">
+                <div id="card-proximas-entregas" class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer h-full">
+                    <div class="text-purple-500 mb-4">
+                        <i class="fas fa-users fa-3x"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2">Actividades de Compañeros</h3>
+                    <p class="text-gray-600 text-sm">Vea las actividades subidas por otros ayudantes.</p>
+                </div>
+            </a>
+
+        </div>
+    </div>
+</div>

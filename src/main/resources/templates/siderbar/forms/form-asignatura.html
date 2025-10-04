@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gestión de Asignaturas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body>
+
+<div th:fragment="content">
+    <div class="container mx-auto px-4 sm:px-8">
+        <div class="py-8">
+            <div>
+                <h2 class="text-2xl font-semibold leading-tight mb-4">Gestión de Asignaturas</h2>
+            </div>
+
+            <div class="-mx-4 sm:-mx-8 px-4 sm:px-8 py-4 overflow-x-auto">
+                <div class="inline-block min-w-full shadow-md rounded-lg overflow-hidden">
+                    <table class="min-w-full leading-normal" id="asignaturas-table">
+                        <thead>
+                        <tr>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">ID</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Código</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Nombre</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Semestre</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Carrera</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-left text-xs font-semibold text-gray-300 uppercase tracking-wider">Docente</th>
+                            <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-800 text-center text-xs font-semibold text-gray-300 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="asignatura : ${asignaturas}">
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900 whitespace-no-wrap" th:text="${asignatura.idAsignatura}"></p></td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900 whitespace-no-wrap" th:text="${asignatura.codigo}"></p></td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900 whitespace-no-wrap" th:text="${asignatura.nombre}"></p></td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900 whitespace-no-wrap" th:text="${asignatura.semestre?.descripcion}"></p></td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900 whitespace-no-wrap" th:text="${asignatura.carrera?.carrera}"></p></td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm"><p class="text-gray-900 whitespace-no-wrap" th:text="${asignatura.docente != null ? asignatura.docente.usuario.nombres + ' ' + asignatura.docente.usuario.apellidos : 'N/A'}"></p></td>
+                            <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
+                                <button class="text-yellow-500 hover:text-yellow-700 mr-3 btn-editar" th:data-id="${asignatura.idAsignatura}">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                                <button class="text-red-500 hover:text-red-700 btn-eliminar" th:data-id="${asignatura.idAsignatura}">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Asignatura Modal -->
+    <div id="edit-asignatura-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Editar Asignatura</h2>
+            <form id="edit-asignatura-form">
+                <input type="hidden" id="edit-id_asignatura" name="id_asignatura">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label for="edit-codigo" class="block text-sm font-medium text-gray-700">Código</label>
+                        <input type="text" id="edit-codigo" name="codigo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                    </div>
+                    <div>
+                        <label for="edit-nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
+                        <input type="text" id="edit-nombre" name="nombre" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required>
+                    </div>
+                    <div>
+                        <label for="edit-id_semestre" class="block text-sm font-medium text-gray-700">Semestre</label>
+                        <select id="edit-id_semestre" name="id_semestre" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required></select>
+                    </div>
+                    <div>
+                        <label for="edit-id_carrera" class="block text-sm font-medium text-gray-700">Carrera</label>
+                        <select id="edit-id_carrera" name="id_carrera" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm" required></select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label for="edit-id_docente" class="block text-sm font-medium text-gray-700">Docente</label>
+                        <select id="edit-id_docente" name="id_docente" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"></select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-4 mt-8">
+                    <button type="button" id="cancel-edit-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cancelar</button>
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirm-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Confirmar Eliminación</h2>
+            <p class="text-gray-600 mb-6">¿Estás seguro de que deseas eliminar esta asignatura? Esta acción no se puede deshacer.</p>
+            <div class="flex justify-end space-x-4">
+                <button id="cancel-delete-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cancelar</button>
+                <button id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const editModal = document.getElementById('edit-asignatura-modal');
+            const editForm = document.getElementById('edit-asignatura-form');
+            const cancelEditBtn = document.getElementById('cancel-edit-btn');
+            const table = document.getElementById('asignaturas-table');
+
+            const deleteModal = document.getElementById('delete-confirm-modal');
+            const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+
+            if (!table) return;
+
+            let asignaturaToDeleteId = null;
+            let rowToDelete = null;
+
+            // --- Helper functions to fetch data ---
+            const fetchAsignaturaData = async (id) => {
+                const response = await fetch(`/api/asignaturas/${id}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            };
+
+            const fetchRelatedData = async () => {
+                const [docentes, carreras, semestres] = await Promise.all([
+                    fetch('/api/docentes').then(res => res.json()),
+                    fetch('/api/carreras').then(res => res.json()),
+                    fetch('/api/semestres').then(res => res.json())
+                ]);
+                return { docentes, carreras, semestres };
+            };
+
+            // --- Functions to populate form selects ---
+            const populateSelect = (selectElement, items, valueField, textField, selectedValue, defaultOptionText) => {
+                selectElement.innerHTML = `<option value="">${defaultOptionText}</option>`;
+                items.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item[valueField];
+                    option.textContent = item[textField];
+                    if (item[valueField] == selectedValue) {
+                        option.selected = true;
+                    }
+                    selectElement.appendChild(option);
+                });
+            };
+
+            // --- Modal control ---
+            const showEditModal = () => { editModal.classList.remove('hidden'); editModal.classList.add('flex'); };
+            const hideEditModal = () => { editModal.classList.add('hidden'); editModal.classList.remove('flex'); editForm.reset(); };
+            const showDeleteModal = () => { deleteModal.classList.remove('hidden'); deleteModal.classList.add('flex'); };
+            const hideDeleteModal = () => { deleteModal.classList.add('hidden'); deleteModal.classList.remove('flex'); };
+
+            // --- Main Event Listener for Table ---
+            table.addEventListener('click', async (e) => {
+                const editButton = e.target.closest('.btn-editar');
+                const deleteButton = e.target.closest('.btn-eliminar');
+
+                if (editButton) {
+                    e.preventDefault();
+                    const id = editButton.dataset.id;
+                    try {
+                        const [asignatura, { docentes, carreras, semestres }] = await Promise.all([ fetchAsignaturaData(id), fetchRelatedData() ]);
+                        editForm.elements['id_asignatura'].value = asignatura.idAsignatura;
+                        editForm.elements['codigo'].value = asignatura.codigo;
+                        editForm.elements['nombre'].value = asignatura.nombre;
+                        populateSelect(editForm.elements['id_semestre'], semestres, 'idSemestre', 'descripcion', asignatura.semestre?.idSemestre, 'Seleccione un semestre');
+                        populateSelect(editForm.elements['id_carrera'], carreras, 'id', 'carrera', asignatura.carrera?.id, 'Seleccione una carrera');
+                        populateSelect(editForm.elements['id_docente'], docentes, 'id_docente', 'nombreCompleto', asignatura.docente?.id, 'No asignar docente');
+                        showEditModal();
+                    } catch (error) {
+                        console.error("Error preparing edit modal:", error);
+                        alert("No se pudieron cargar los datos para la edición. Revise la consola del navegador (F12) y la consola del servidor para más detalles.");
+                    }
+                }
+
+                if (deleteButton) {
+                    e.preventDefault();
+                    asignaturaToDeleteId = deleteButton.dataset.id;
+                    rowToDelete = deleteButton.closest('tr');
+                    showDeleteModal();
+                }
+            });
+
+            // --- Edit Form Submission ---
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const id = editForm.elements['id_asignatura'].value;
+                const formData = new FormData(editForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch(`/api/asignaturas/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+                    if (!response.ok) throw new Error('Failed to update asignatura');
+                    hideEditModal();
+                    alert('Asignatura actualizada con éxito. La tabla se refrescará.');
+                    if(typeof handleLinkClick === 'function') { handleLinkClick('gestion-asignaturas', false); }
+                } catch (error) {
+                    console.error("Error updating asignatura:", error);
+                    alert("Error al actualizar la asignatura.");
+                }
+            });
+
+            // --- Delete Confirmation ---
+            confirmDeleteBtn.addEventListener('click', async () => {
+                if (!asignaturaToDeleteId) return;
+
+                try {
+                    const response = await fetch(`/api/asignaturas/${asignaturaToDeleteId}`, { method: 'DELETE' });
+                    if (!response.ok) throw new Error('Failed to delete asignatura');
+                    
+                    if(rowToDelete) {
+                        rowToDelete.remove();
+                    }
+                    hideDeleteModal();
+                    alert('Asignatura eliminada con éxito.');
+
+                } catch(error) {
+                    console.error('Error deleting asignatura:', error);
+                    alert('No se pudo eliminar la asignatura.');
+                    hideDeleteModal();
+                }
+            });
+
+            // --- Modal Closing Events ---
+            cancelEditBtn.addEventListener('click', hideEditModal);
+            editModal.addEventListener('click', (e) => { if (e.target === editModal) hideEditModal(); });
+            cancelDeleteBtn.addEventListener('click', hideDeleteModal);
+            deleteModal.addEventListener('click', (e) => { if (e.target === deleteModal) hideDeleteModal(); });
+
+        })();
+    </script>
+</div>
+
+</body>
+</html>

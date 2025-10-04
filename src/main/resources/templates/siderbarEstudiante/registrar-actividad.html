@@ -1,0 +1,104 @@
+<div th:fragment="content">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Título y Subtítulo -->
+        <div class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-800">Registrar Nueva Actividad de Refuerzo</h1>
+            <p class="text-gray-600 mt-2">
+                Sube materiales de apoyo para los estudiantes, como guías, ejercicios o videos.
+            </p>
+        </div>
+
+        <!-- Formulario de Registro de Actividad -->
+        <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-8">
+            <form action="/estudiante/actividad/registrar" method="post" enctype="multipart/form-data">
+
+                <!-- Asignatura -->
+                <div class="mb-6">
+                    <label for="asignatura" class="block text-gray-700 text-sm font-bold mb-2">Asignatura:</label>
+                    <select id="asignatura" name="asignaturaId"
+                            class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option th:each="asignatura : ${asignaturas}"
+                                th:value="${asignatura.idAsignatura}"
+                                th:text="${asignatura.nombre}"></option>
+                    </select>
+                </div>
+
+                <!-- Título de la Actividad -->
+                <div class="mb-6">
+                    <label for="titulo" class="block text-gray-700 text-sm font-bold mb-2">Título de la Actividad:</label>
+                    <input type="text" id="titulo" name="titulo" placeholder="Ej: Guía de ejercicios sobre Álgebra Lineal"
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+                </div>
+
+                <!-- Descripción -->
+                <div class="mb-6">
+                    <label for="descripcion" class="block text-gray-700 text-sm font-bold mb-2">Descripción:</label>
+                    <textarea id="descripcion" name="descripcion" rows="4"
+                              placeholder="Describe el propósito de la actividad y qué temas abarca."
+                              class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required></textarea>
+                </div>
+
+                <!-- Tipo de Actividad -->
+                <div class="mb-6">
+                    <label for="tipoActividad" class="block text-gray-700 text-sm font-bold mb-2">Tipo de Recurso:</label>
+                    <select id="tipoActividad" name="tipoActividad"
+                            class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <option value="documento">Documento (PDF, Word, etc.)</option>
+                        <option value="enlace">Enlace a Video o Sitio Web</option>
+                        <option value="guia">Guía de Estudio</option>
+                        <option value="ejercicio">Ejercicio Práctico</option>
+                    </select>
+                </div>
+
+                <!-- Campo para Subir Archivo -->
+                <div id="campo-archivo" class="mb-6">
+                    <label for="archivo" class="block text-gray-700 text-sm font-bold mb-2">Subir Archivo:</label>
+                    <input type="file" id="archivo" name="archivo"
+                           class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+
+                <!-- Campo para URL -->
+                <div id="campo-enlace" class="mb-6 hidden">
+                    <label for="enlace" class="block text-gray-700 text-sm font-bold mb-2">URL del Recurso:</label>
+                    <input type="url" id="enlace" name="enlace" placeholder="https://ejemplo.com/video"
+                           class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                </div>
+
+                <!-- Botón de Envío -->
+                <div class="flex items-center justify-center">
+                    <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full focus:outline-none focus:shadow-outline transform transition-transform duration-300 hover:scale-105">
+                        <i class="fas fa-upload mr-2"></i> Subir Actividad
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tipoActividad = document.getElementById('tipoActividad');
+            const campoArchivo = document.getElementById('campo-archivo');
+            const campoEnlace = document.getElementById('campo-enlace');
+            const inputArchivo = document.getElementById('archivo');
+            const inputEnlace = document.getElementById('enlace');
+
+            tipoActividad.addEventListener('change', function () {
+                if (this.value === 'enlace') {
+                    campoArchivo.classList.add('hidden');
+                    campoEnlace.classList.remove('hidden');
+                    inputArchivo.required = false;
+                    inputEnlace.required = true;
+                } else {
+                    campoArchivo.classList.remove('hidden');
+                    campoEnlace.classList.add('hidden');
+                    inputArchivo.required = true;
+                    inputEnlace.required = false;
+                }
+            });
+
+            // Trigger change on load to set initial state
+            tipoActividad.dispatchEvent(new Event('change'));
+        });
+    </script>
+</div>

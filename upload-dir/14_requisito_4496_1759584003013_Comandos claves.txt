@@ -1,0 +1,43 @@
+./mvnw clean install
+./mvnw spring-boot:run
+http://localhost:8082/login
+
+
+
+
+
+
+
+decano: flopeze1
+contraseña: 1000000025*7609
+
+coordinador: azambranoy
+contraseña: 1250000033*5704
+
+admin: admin
+contraseña: 1250000000*9048
+
+estudiante: azambranoy1
+contraseña: 1251000000*8699
+
+estudiante2: asanchezp
+contraseña: 1250604160*8776
+
+estudiante3: rsanchezp
+contraseña: 1250604150*7336
+
+docente: azambranoy2
+contraseña: 1250000055*2494
+
+docente1: azambranoy2
+contraseña: 1250000055*2494
+docente2: dyongz
+contraseña: 1000000117*4266
+docente3:xviteg
+contraseña:1000000118*7529
+
+
+
+
+
+.\mvnw clean install -DskipTests

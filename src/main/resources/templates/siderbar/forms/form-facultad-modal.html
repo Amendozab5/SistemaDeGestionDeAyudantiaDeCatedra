@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <form id="form-facultad" th:object="${facultad}" th:action="@{/gestionacademica/facultad/guardar}" method="post">
+        <input type="hidden" th:field="*{id}" />
+        <div class="p-4">
+            <h2 class="text-2xl font-bold mb-4" th:text="${isEdit} ? 'Editar Facultad' : 'Nueva Facultad'"></h2>
+            <div>
+                <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre de la Facultad</label>
+                <input type="text" id="nombre" th:field="*{nombre}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required />
+            </div>
+            <div class="flex justify-end mt-6">
+                <button type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mr-2" onclick="document.getElementById('generic-modal').classList.add('hidden')">Cancelar</button>
+                <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Guardar</button>
+            </div>
+        </div>
+    </form>
+</div>
+</body>
+</html>

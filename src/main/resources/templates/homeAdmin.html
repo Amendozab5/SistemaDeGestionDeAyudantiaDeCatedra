@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Académico - Administrador</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="/css/usuarios.css" th:href="@{/css/usuarios.css}">
+  <style>
+    .sidebar-scroll::-webkit-scrollbar { width: 5px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 10px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: #2d3748; }
+    #notification-panel {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        width: 300px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        z-index: 50;
+        color: #000;
+    }
+    .modal {
+        transition: opacity 0.25s ease;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div class="flex h-screen bg-gray-200">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-800 text-white flex-shrink-0 sidebar-scroll overflow-y-auto">
+        <div class="p-4 border-b border-gray-700">
+            <div class="flex items-center">
+                <i class="fas fa-graduation-cap text-2xl text-green-400"></i>
+                <div class="ml-3">
+                    <h1 class="text-lg font-bold">SGAAC</h1>
+                    <p class="text-xs text-gray-400">Gestión de Ayudantías</p>
+                </div>
+            </div>
+        </div>
+        <nav class="mt-4">
+            <ul class="flex flex-col space-y-2 px-2">
+                <li><a href="#" id="dashboard-link" class="flex items-center py-2 px-4 bg-gray-700 rounded-md text-white"><i class="fas fa-tachometer-alt w-6"></i><span class="ml-3">Dashboard</span></a></li>
+                <li><a href="#" id="load-gestion-usuarios-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-users-cog w-6"></i><span class="ml-3">Usuarios</span></a></li>
+                <li><a href="#" id="load-crear-convocatoria-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-bullhorn w-6"></i><span class="ml-3">Convocatorias</span></a></li>
+                <li><a href="#" id="load-gestion-academica-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-book-open w-6"></i><span class="ml-3">Gestion Academica</span></a></li>
+                <li><a href="#" id="load-ayudantias-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-user-check w-6"></i><span class="ml-3">Ayudantías</span></a></li>
+                <li><a href="#" id="load-configuracion-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-cog w-6"></i><span class="ml-3">Configuración</span></a></li>
+                <li class="pt-4 mt-4 border-t border-gray-700"><a href="#" id="logout-link" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-sign-out-alt w-6"></i><span class="ml-3">Cerrar Sesión</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Content wrapper -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="bg-white shadow z-10">
+            <div class="container mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="text-xl font-semibold text-gray-700">Dashboard Principal</div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button id="notification-bell" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                                <i class="fas fa-bell text-xl"></i>
+                            </button>
+                            <div id="notification-panel" class="p-4">
+                                <p class="font-bold">¡Bienvenido al sistema!</p>
+                                <hr class="my-2"/>
+                                <div id="notifications-list">
+                                    <p class="text-sm text-gray-500">No hay notificaciones nuevas.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold" th:text="${userInitial}">A</div>
+                            <span class="ml-3 text-gray-700" th:text="${username}">Admin</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-6">
+            <div id="dashboard-content" class="container mx-auto">
+                <!-- Tarjetas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-green-500 text-white rounded-full p-3"><i class="fas fa-user-friends text-2xl"></i></div>
+                        <div class="ml-4"><h3 class="text-3xl font-bold">0</h3><p class="text-gray-500">Ayudantes Activos</p></div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-green-500 text-white rounded-full p-3"><i class="fas fa-book text-2xl"></i></div>
+                        <div class="ml-4"><h3 class="text-3xl font-bold">0</h3><p class="text-gray-500">Cursos Activos</p></div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-yellow-500 text-white rounded-full p-3"><i class="fas fa-envelope-open-text text-2xl"></i></div>
+                        <div class="ml-4"><h3 class="text-3xl font-bold">0</h3><p class="text-gray-500">Solicitudes Pendientes</p></div>
+                    </div>
+                </div>
+
+                <!-- Secciones -->
+                <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold">Reportes y Estadísticas</h2>
+                            <a href="#" class="text-green-500 hover:underline">Ver todos <i class="fas fa-chevron-right text-xs"></i></a>
+                        </div>
+                        <p class="text-gray-600">Aquí se mostrarán informes de rendimiento.</p>
+                    </div>
+                </div>
+                
+                <!-- Footer dentro del contenido scrolleable -->
+                <footer class="mt-8 text-center text-gray-600 text-sm">
+                    © 2025 SGAAC. Todos los derechos reservados.
+                </footer>
+            </div>
+            <div id="gestion-usuarios-panel" class="container mx-auto hidden"></div>
+            <div id="convocatorias-panel" class="container mx-auto hidden"></div>
+            <div id="gestion-academica-panel" class="container mx-auto hidden"></div>
+            <div id="ayudantias-panel" class="container mx-auto hidden"></div>
+            <div id="configuracion-panel" class="container mx-auto hidden"></div>
+            <div id="auditoria-panel" class="container mx-auto hidden"></div>
+        </main>
+    </div>
+</div>
+
+<!-- Facultad Modal -->
+<div id="facultad-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Crear Nueva Facultad</h2>
+        <form id="facultad-form">
+            <div>
+                <label for="facultad-nombre" class="block text-sm font-medium text-gray-700">Nombre de la Facultad</label>
+                <input type="text" id="facultad-nombre" name="nombre" required class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+            </div>
+            <div class="flex justify-end space-x-4 mt-6">
+                <button id="cancel-facultad-btn" type="button" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cancelar</button>
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Logout Confirmation Modal -->
+<div id="logout-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+      <h2 class="text-2xl font-bold text-gray-800 mb-4">Confirmar Cierre de Sesión</h2>
+      <p class="text-gray-600 mb-6">¿Estás seguro de que deseas cerrar sesión?</p>
+      <div class="flex justify-end space-x-4">
+        <button id="cancel-logout-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cancelar</button>
+        <button id="confirm-logout-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Cerrar Sesión</button>
+      </div>
+    </div>
+</div>
+
+<!-- Generic Confirmation Modal -->
+<div id="confirmation-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+      <h2 id="confirmation-title" class="text-2xl font-bold text-gray-800 mb-4">Confirmación</h2>
+      <p id="confirmation-message" class="text-gray-600 mb-6">¿Estás seguro?</p>
+      <div class="flex justify-end space-x-4">
+        <button id="cancel-confirmation-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cancelar</button>
+        <button id="confirm-confirmation-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Confirmar</button>
+      </div>
+    </div>
+</div>
+
+<!-- Generic Alert Modal -->
+<div id="alert-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+      <h2 id="alert-title" class="text-2xl font-bold text-gray-800 mb-4">Aviso</h2>
+      <p id="alert-message" class="text-gray-600 mb-6"></p>
+      <div class="flex justify-end space-x-4">
+        <button id="ok-alert-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Aceptar</button>
+      </div>
+    </div>
+</div>
+
+<!-- Generic Modal Container -->
+<div id="generic-modal" class="modal fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div id="generic-modal-content" class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+        <!-- Content will be loaded here -->
+    </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const logoutLink = document.getElementById('logout-link');
+    const logoutModal = document.getElementById('logout-modal');
+    const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
+    const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
+
+    function showLogoutModal() {
+        logoutModal.classList.remove('hidden');
+        logoutModal.classList.add('flex');
+    }
+
+    function hideLogoutModal() {
+        logoutModal.classList.add('hidden');
+        logoutModal.classList.remove('flex');
+    }
+
+    logoutLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        showLogoutModal();
+    });
+
+    cancelLogoutBtn.addEventListener('click', hideLogoutModal);
+
+    confirmLogoutBtn.addEventListener('click', () => {
+        window.location.href = '/logout';
+    });
+
+    logoutModal.addEventListener('click', (e) => {
+        if (e.target === logoutModal) {
+            hideLogoutModal();
+        }
+    });
+
+    const bell = document.getElementById('notification-bell');
+    const panel = document.getElementById('notification-panel');
+
+    bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!panel.contains(e.target)) {
+            panel.style.display = 'none';
+        }
+        
+        const convoModal = document.getElementById('newConvocatoriaModal');
+        if (convoModal && e.target === convoModal) {
+            convoModal.classList.add('hidden');
+        }
+    });
+
+    // --- SCRIPT REFACTOR FOR SIDEBAR HIGHLIGHTING ---
+
+    const dashboardContent = document.getElementById('dashboard-content');
+    const gestionUsuariosPanel = document.getElementById('gestion-usuarios-panel');
+    const convocatoriasPanel = document.getElementById('convocatorias-panel');
+    const gestionAcademicaPanel = document.getElementById('gestion-academica-panel');
+    const ayudantiasPanel = document.getElementById('ayudantias-panel');
+    const configuracionPanel = document.getElementById('configuracion-panel');
+
+    const auditoriaPanel = document.getElementById('auditoria-panel');
+
+    const sidebarLinkElements = {
+        'dashboard': document.getElementById('dashboard-link'),
+        'gestion-usuarios': document.getElementById('load-gestion-usuarios-sidebar'),
+        'convocatorias-menu': document.getElementById('load-crear-convocatoria-sidebar'),
+        'gestion-academica': document.getElementById('load-gestion-academica-sidebar'),
+        'ayudantias': document.getElementById('load-ayudantias-sidebar'),
+        'configuracion': document.getElementById('load-configuracion-sidebar')
+    };
+
+    const baseUrl = window.location.pathname.replace(/\/$/, '');
+
+    function setActiveSidebarLink(viewName) {
+        Object.values(sidebarLinkElements).forEach(link => link && link.classList.remove('bg-gray-700'));
+        
+        let activeView = viewName;
+        if (viewName && viewName.startsWith('convocatoria-')) {
+            activeView = 'convocatorias-menu';
+        }
+        
+        const activeLink = sidebarLinkElements[activeView];
+        if (activeLink) {
+            activeLink.classList.add('bg-gray-700');
+        }
+    }
+
+    function hideAllPanels() {
+        dashboardContent.classList.add('hidden');
+        gestionUsuariosPanel.classList.add('hidden');
+        convocatoriasPanel.classList.add('hidden');
+        gestionAcademicaPanel.classList.add('hidden');
+        ayudantiasPanel.classList.add('hidden');
+        configuracionPanel.classList.add('hidden');
+        auditoriaPanel.classList.add('hidden');
+    }
+
+    function showDashboard(pushState = true) {
+        hideAllPanels();
+        dashboardContent.classList.remove('hidden');
+        if (pushState) {
+            history.pushState({ view: 'dashboard' }, '', baseUrl || '/');
+        }
+        document.querySelector('header .text-xl').textContent = 'Dashboard Principal';
+        setActiveSidebarLink('dashboard');
+    }
+
+    async function fetchAndShow(panel, url, title, view, pushState, onLoadEvent = null) {
+        hideAllPanels();
+        panel.innerHTML = '<p class="text-center p-8">Cargando...</p>';
+        panel.classList.remove('hidden');
+        document.querySelector('header .text-xl').textContent = title;
+
+        try {
+            const response = await fetch(url, { headers: { 'X-Partial': 'true' } });
+            if (!response.ok) throw new Error(`Error en la red: ${response.statusText}`);
+            const html = await response.text();
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+
+            panel.innerHTML = '';
+            Array.from(tempDiv.children).forEach(child => {
+                if (child.tagName.toLowerCase() !== 'script') {
+                    panel.appendChild(child.cloneNode(true));
+                }
+            });
+
+            tempDiv.querySelectorAll('script').forEach(script => {
+                const newScript = document.createElement('script');
+                Array.from(script.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+                newScript.textContent = script.textContent;
+                document.body.appendChild(newScript).parentNode.removeChild(newScript);
+            });
+
+            if (onLoadEvent) {
+                document.dispatchEvent(new CustomEvent(onLoadEvent));
+            }
+            if (pushState) {
+                history.pushState({ view: view }, "", `?view=${view}`);
+            }
+        } catch (error) {
+            console.error(`Fallo al cargar el fragmento de ${view}:`, error);
+            panel.innerHTML = '<div class="p-4 text-red-700 bg-red-100 border border-red-400 rounded">Error al cargar el contenido.</div>';
+        }
+    }
+
+    const views = {
+        'gestion-usuarios': { panel: gestionUsuariosPanel, url: '/usuarios/gestion?fragment=true', title: 'Gestión de Usuarios' },
+        'gestion-autoridades': { panel: gestionUsuariosPanel, url: '/usuarios/gestion-autoridades?fragment=true', title: 'Gestión de Autoridades' },
+        'crear-estudiante': { panel: gestionUsuariosPanel, url: '/usuarios/crear-estudiante?fragment=true', title: 'Crear Estudiante' },
+        'convocatorias-menu': { panel: convocatoriasPanel, url: '/convocatorias?fragment=true', title: 'Convocatorias' },
+        'gestion-academica': { panel: gestionAcademicaPanel, url: '/gestionacademica?fragment=true', title: 'Gestión Académica' },
+        'ayudantias': { panel: ayudantiasPanel, url: '/usuarios/ayudantias?fragment=true', title: 'Gestión de Ayudantías' },
+        'convocatoria-crear-form': { panel: convocatoriasPanel, url: '/convocatorias/crear-form?fragment=true', title: 'Crear Nueva Convocatoria' },
+        'convocatoria-gestionar-list': { panel: convocatoriasPanel, url: '/convocatorias/gestionar-list?fragment=true', title: 'Gestionar Convocatorias' },
+        'convocatoria-resultados-list': { panel: convocatoriasPanel, url: '/convocatorias/resultados-list?fragment=true', title: 'Resultados y Adjudicación' },
+        'gestion-facultades': { panel: gestionAcademicaPanel, url: '/gestionacademica/facultades?fragment=true', title: 'Gestión de Facultades' },
+        'gestion-carreras': { panel: gestionAcademicaPanel, url: '/gestionacademica/carreras?fragment=true', title: 'Gestión de Carreras' },
+        'gestion-asignaturas': { panel: gestionAcademicaPanel, url: '/gestionacademica/asignaturas?fragment=true', title: 'Gestión de Asignaturas' },
+        'configuracion': { panel: configuracionPanel, url: '/admin/configuracion?fragment=true', title: 'Configuración' },
+        'configuracion-requisitos': { panel: configuracionPanel, url: '/admin/configuracion/requisitos?fragment=true', title: 'Configurar Requisitos' },
+        'configuracion-meritos': { panel: configuracionPanel, url: '/admin/configuracion/meritos', title: 'Configurar Criterios de Mérito' },
+        'auditoria': { panel: auditoriaPanel, url: '/admin/auditoria', title: 'Auditoría del Sistema', event: 'auditoria-loaded' }
+    };
+
+    function handleLinkClick(viewName, pushState) {
+        const view = views[viewName];
+        if (view) {
+            setActiveSidebarLink(viewName);
+            fetchAndShow(view.panel, view.url, view.title, viewName, pushState, view.event || null);
+        }
+    }
+
+    window.handleLinkClick = handleLinkClick;
+
+    Object.entries(sidebarLinkElements).forEach(([viewName, linkElement]) => {
+        if (linkElement) {
+            linkElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (viewName === 'dashboard') {
+                    showDashboard(true);
+                }
+                else {
+                    handleLinkClick(viewName, true);
+                }
+            });
+        }
+    });
+
+    window.addEventListener('popstate', (e) => {
+        const viewName = e.state ? e.state.view : 'dashboard';
+        if (views[viewName]) {
+            handleLinkClick(viewName, false);
+        }
+        else {
+            showDashboard(false);
+        }
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
+    if (view && views[view]) {
+        handleLinkClick(view, false);
+    } else {
+        if(view) {
+            history.replaceState({ view: 'dashboard' }, '', window.location.pathname);
+        }
+        showDashboard(false);
+    }
+
+    // *** Event Delegation for Dynamic Content ***
+
+    convocatoriasPanel.addEventListener('click', (e) => {
+        const modal = document.getElementById('newConvocatoriaModal');
+        if (modal) {
+            if (e.target.id === 'openModalBtn' || e.target.closest('#openModalBtn')) {
+                e.preventDefault();
+                modal.classList.remove('hidden');
+            }
+            if (e.target.id === 'closeModalBtn' || e.target.closest('#closeModalBtn')) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        const cardCrear = e.target.closest('#card-crear-convocatoria');
+        if (cardCrear) {
+            e.preventDefault();
+            handleLinkClick('convocatoria-crear-form', true);
+            return;
+        }
+
+        const cardGestionar = e.target.closest('#card-gestionar-convocatorias');
+        if (cardGestionar) {
+            e.preventDefault();
+            handleLinkClick('convocatoria-gestionar-list', true);
+            return;
+        }
+
+        const cardResultados = e.target.closest('#card-resultados-adjudicacion');
+        if (cardResultados) {
+            e.preventDefault();
+            handleLinkClick('convocatoria-resultados-list', true);
+            return;
+        }
+
+        const btnEditar = e.target.closest('.btn-editar');
+        if (btnEditar) {
+            e.preventDefault();
+            const id = btnEditar.dataset.id;
+            const url = `/convocatorias/editar/${id}?fragment=true`;
+            const title = 'Editar Convocatoria';
+            const viewName = `convocatoria-editar-${id}`;
+            fetchAndShow(convocatoriasPanel, url, title, viewName, true);
+            setActiveSidebarLink('convocatorias-menu');
+            return;
+        }
+    });
+
+    gestionUsuariosPanel.addEventListener('click', (e) => {
+        const cardPersonal = e.target.closest('#card-crear-personal');
+        if (cardPersonal) {
+            e.preventDefault();
+            handleLinkClick('gestion-autoridades', true);
+            return;
+        }
+
+        const cardEstudiante = e.target.closest('#card-crear-estudiante');
+        if (cardEstudiante) {
+            e.preventDefault();
+            handleLinkClick('crear-estudiante', true);
+            return;
+        }
+    });
+
+    gestionAcademicaPanel.addEventListener('click', (e) => {
+        // Open Facultad Modal
+        if (e.target.id === 'open-facultad-modal-btn') {
+            e.preventDefault();
+            document.getElementById('facultad-modal').classList.remove('hidden');
+            document.getElementById('facultad-modal').classList.add('flex');
+        }
+
+        const cardFacultad = e.target.closest('#card-gestionar-facultades');
+        if (cardFacultad) {
+            e.preventDefault();
+            handleLinkClick('gestion-facultades', true);
+            return;
+        }
+
+        const cardCarrera = e.target.closest('#card-gestionar-carreras');
+        if (cardCarrera) {
+            e.preventDefault();
+            handleLinkClick('gestion-carreras', true);
+            return;
+        }
+
+        const cardAsignatura = e.target.closest('#card-gestionar-asignaturas');
+        if (cardAsignatura) {
+            e.preventDefault();
+            handleLinkClick('gestion-asignaturas', true);
+            return;
+        }
+    });
+
+    // Close Facultad Modal
+    const facultadModal = document.getElementById('facultad-modal');
+    document.getElementById('cancel-facultad-btn').addEventListener('click', () => {
+        facultadModal.classList.add('hidden');
+        facultadModal.classList.remove('flex');
+    });
+    facultadModal.addEventListener('click', (e) => {
+        if (e.target === facultadModal) {
+            facultadModal.classList.add('hidden');
+            facultadModal.classList.remove('flex');
+        }
+    });
+
+    configuracionPanel.addEventListener('click', (e) => {
+        const cardRequisitos = e.target.closest('#card-configurar-requisitos');
+        if (cardRequisitos) {
+            e.preventDefault();
+            handleLinkClick('configuracion-requisitos', true);
+            return;
+        }
+
+        const cardMeritos = e.target.closest('#card-configurar-meritos');
+        if (cardMeritos) {
+            e.preventDefault();
+            handleLinkClick('configuracion-meritos', true);
+            return;
+        }
+
+        const cardAuditoria = e.target.closest('#card-auditoria');
+        if (cardAuditoria) {
+            e.preventDefault();
+            handleLinkClick('auditoria', true);
+            return;
+        }
+    });
+
+    // Handle Facultad Form Submission
+    document.getElementById('facultad-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nombre = document.getElementById('facultad-nombre').value;
+        const facultadModal = document.getElementById('facultad-modal');
+
+        if (!nombre.trim()) {
+            alert('El nombre de la facultad no puede estar vacío.');
+            return;
+        }
+
+        try {
+            const response = await fetch('/gestionacademica/facultad/guardar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    'nombre': nombre
+                })
+            });
+
+            if (response.ok) {
+                facultadModal.classList.add('hidden');
+                facultadModal.classList.remove('flex');
+                // Reload the faculties view to show the new one
+                handleLinkClick('gestion-facultades', false);
+                alert('Facultad creada con éxito.');
+            } else {
+                throw new Error('Error al guardar la facultad.');
+            }
+        } catch (error) {
+            console.error('Error en el formulario de facultad:', error);
+            alert(error.message);
+        }
+    });
+
+    // --- Generic Modal Logic ---
+    const confirmationModal = document.getElementById('confirmation-modal');
+    const confirmationMessage = document.getElementById('confirmation-message');
+    const cancelConfirmationBtn = document.getElementById('cancel-confirmation-btn');
+    const confirmConfirmationBtn = document.getElementById('confirm-confirmation-btn');
+    let onConfirmCallback = null;
+
+    function showConfirmationModal(message, onConfirm) {
+        confirmationMessage.textContent = message;
+        onConfirmCallback = onConfirm;
+        confirmationModal.classList.remove('hidden');
+        confirmationModal.classList.add('flex');
+    }
+
+    function hideConfirmationModal() {
+        confirmationModal.classList.add('hidden');
+        confirmationModal.classList.remove('flex');
+        onConfirmCallback = null;
+    }
+
+    cancelConfirmationBtn.addEventListener('click', hideConfirmationModal);
+    confirmConfirmationBtn.addEventListener('click', () => {
+        if (typeof onConfirmCallback === 'function') {
+            onConfirmCallback();
+        }
+        hideConfirmationModal();
+    });
+
+    const alertModal = document.getElementById('alert-modal');
+    const alertMessage = document.getElementById('alert-message');
+    const okAlertBtn = document.getElementById('ok-alert-btn');
+
+    function showAlertModal(message) {
+        alertMessage.textContent = message;
+        alertModal.classList.remove('hidden');
+        alertModal.classList.add('flex');
+    }
+
+    function hideAlertModal() {
+        alertModal.classList.add('hidden');
+        alertModal.classList.remove('flex');
+    }
+
+    okAlertBtn.addEventListener('click', hideAlertModal);
+
+    // Make functions globally available
+    window.showConfirmationModal = showConfirmationModal;
+    window.showAlertModal = showAlertModal;
+
+  });
+</script>
+</body>
+</html>

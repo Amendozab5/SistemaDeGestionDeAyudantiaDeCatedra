@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Crear Plaza para Postulación</h1>
+        <p class="text-gray-500 mb-8">Define los detalles y requisitos para una nueva plaza de ayudantía.</p>
+
+        <form id="postulacion-form" th:action="@{/coordinador/postulaciones/crear}" method="post" class="bg-white p-8 rounded-2xl shadow-lg space-y-8">
+
+            <!-- 1. SECCIÓN DE CONVOCATORIA -->
+            <fieldset class="p-6 border border-gray-200 rounded-lg">
+                <legend class="text-xl font-semibold text-gray-800 px-2">1. Convocatoria Asociada</legend>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                    <div>
+                        <label for="convocatoria" class="block text-sm font-medium text-gray-700 mb-2">Seleccionar Convocatoria Activa</label>
+                        <select id="convocatoria" name="convocatoriaId" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                            <option value="">-- Seleccione una convocatoria --</option>
+                            <option th:each="conv : ${convocatorias}" 
+                                    th:value="${conv.idConvocatoria}" 
+                                    th:text="${conv.titulo}"
+                                    th:attr="data-descripcion=${conv.descripcion}, data-inicio=${conv.fechaInicio}, data-fin=${conv.fechaFin}">
+                            </option>
+                        </select>
+                    </div>
+                    <div id="convocatoria-details" class="bg-gray-50 p-4 rounded-md border border-gray-200 hidden transition-all duration-300">
+                        <h4 class="font-bold text-gray-800 mb-2">Detalles</h4>
+                        <p class="text-sm text-gray-600"><strong class="font-medium">Descripción:</strong> <span id="conv-descripcion"></span></p>
+                        <p class="text-sm text-gray-600 mt-1"><strong class="font-medium">Inicio:</strong> <span id="conv-inicio"></span></p>
+                        <p class="text-sm text-gray-600 mt-1"><strong class="font-medium">Fin:</strong> <span id="conv-fin"></span></p>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- 2. SECCIÓN DE ASIGNATURAS -->
+            <fieldset class="p-6 border border-gray-200 rounded-lg">
+                <legend class="text-xl font-semibold text-gray-800 px-2">2. Asignaturas y Plazas</legend>
+                <div id="asignaturas-tags-container" class="flex flex-wrap gap-3 p-2 border rounded-md min-h-[40px] mt-4 bg-gray-50">
+                    <!-- Las etiquetas de asignaturas se añadirán aquí -->
+                </div>
+                <div class="mt-4">
+                    <button type="button" id="open-asignatura-modal-btn" class="text-indigo-600 hover:text-indigo-800 font-semibold py-2 px-4 rounded-md transition ease-in-out duration-150">
+                        <i class="fas fa-plus-circle mr-2"></i>Añadir Plaza
+                    </button>
+                </div>
+            </fieldset>
+
+            <!-- BOTÓN DE ENVÍO -->
+            <div class="flex justify-end border-t pt-6 mt-8">
+                <button type="submit" class="inline-flex justify-center py-3 px-8 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Crear Plazas
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- MODAL PARA AÑADIR ASIGNATURA -->
+    <div id="asignatura-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-lg transform transition-all duration-300 scale-95">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Añadir Plaza</h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="modal-semestre" class="block text-sm font-medium text-gray-700 mb-1">Semestre</label>
+                    <select id="modal-semestre" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="">-- Seleccione un semestre --</option>
+                        <option th:each="sem : ${semestres}" th:value="${sem}" th:text="${sem} + 'º Semestre'"></option>
+                    </select>
+                </div>
+                <div>
+                    <label for="modal-asignatura" class="block text-sm font-medium text-gray-700 mb-1">Asignatura</label>
+                    <select id="modal-asignatura" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>
+                        <option value="">-- Primero seleccione un semestre --</option>
+                    </select>
+                </div>
+                <div id="modal-docente-container" style="display: none;">
+                    <label for="modal-docente" class="block text-sm font-medium text-gray-700 mb-1">Docente</label>
+                    <select id="modal-docente" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" disabled>
+                        <option value="">-- Primero seleccione una asignatura --</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="modal-cupos" class="block text-sm font-medium text-gray-700 mb-1">Cupos Disponibles</label>
+                    <input type="number" id="modal-cupos" min="1" value="1" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="modal-fecha-inicio" class="block text-sm font-medium text-gray-700 mb-1">Inicio de Postulación</label>
+                        <input type="date" id="modal-fecha-inicio" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="modal-fecha-fin" class="block text-sm font-medium text-gray-700 mb-1">Fin de Postulación</label>
+                        <input type="date" id="modal-fecha-fin" class="mt-1 block w-full py-2 px-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                    </div>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-4 mt-8">
+                <button id="cancel-add-asignatura-btn" type="button" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded">Cancelar</button>
+                <button id="confirm-add-asignatura-btn" type="button" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded">Añadir</button>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        console.log("Inicializando script completo del formulario...");
+
+        const mainForm = document.getElementById('postulacion-form');
+        const convocatoriaSelect = document.getElementById('convocatoria');
+        const detailsDiv = document.getElementById('convocatoria-details');
+        const tagsContainer = document.getElementById('asignaturas-tags-container');
+        
+        const modal = document.getElementById('asignatura-modal');
+        const openModalBtn = document.getElementById('open-asignatura-modal-btn');
+        const cancelBtn = document.getElementById('cancel-add-asignatura-btn');
+        const confirmBtn = document.getElementById('confirm-add-asignatura-btn');
+        const modalSemestreSelect = document.getElementById('modal-semestre');
+        const modalAsignaturaSelect = document.getElementById('modal-asignatura');
+        const modalDocenteContainer = document.getElementById('modal-docente-container');
+        const modalDocenteSelect = document.getElementById('modal-docente');
+        const modalCuposInput = document.getElementById('modal-cupos');
+        const modalFechaInicioInput = document.getElementById('modal-fecha-inicio');
+        const modalFechaFinInput = document.getElementById('modal-fecha-fin');
+
+        let asignaturaIndex = 0;
+
+        if (convocatoriaSelect) {
+            convocatoriaSelect.addEventListener('change', (e) => {
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                if (selectedOption.value) {
+                    detailsDiv.querySelector('#conv-descripcion').textContent = selectedOption.getAttribute('data-descripcion');
+                    detailsDiv.querySelector('#conv-inicio').textContent = new Date(selectedOption.getAttribute('data-inicio')).toLocaleDateString();
+                    detailsDiv.querySelector('#conv-fin').textContent = new Date(selectedOption.getAttribute('data-fin')).toLocaleDateString();
+                    detailsDiv.classList.remove('hidden');
+                } else {
+                    detailsDiv.classList.add('hidden');
+                }
+            });
+        }
+
+        const openModal = () => {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => modal.firstElementChild.classList.remove('scale-95'), 10);
+        };
+
+        const closeModal = () => {
+            modal.firstElementChild.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                modalSemestreSelect.value = '';
+                modalAsignaturaSelect.innerHTML = '<option value="">-- Primero seleccione un semestre --</option>';
+                modalAsignaturaSelect.disabled = true;
+                modalDocenteContainer.style.display = 'none';
+                modalDocenteSelect.innerHTML = '<option value="">-- Primero seleccione una asignatura --</option>';
+                modalDocenteSelect.disabled = true;
+                modalCuposInput.value = 1;
+                modalFechaInicioInput.value = '';
+                modalFechaFinInput.value = '';
+            }, 300);
+        };
+
+        if (openModalBtn) openModalBtn.addEventListener('click', openModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        if (modal) modal.addEventListener('click', (e) => { 
+            if (e.target === modal) closeModal(); 
+        });
+
+        if (modalSemestreSelect) {
+            modalSemestreSelect.addEventListener('change', async () => {
+                const semestre = modalSemestreSelect.value;
+                modalAsignaturaSelect.disabled = true;
+                modalAsignaturaSelect.innerHTML = '<option>Cargando...</option>';
+                modalDocenteContainer.style.display = 'none';
+                modalDocenteSelect.disabled = true;
+
+                if (!semestre) {
+                    modalAsignaturaSelect.innerHTML = '<option>-- Primero seleccione un semestre --</option>';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/asignaturas/semestre?semestre=${semestre}`);
+                    if (!response.ok) throw new Error('La respuesta de la red no fue exitosa.');
+                    const asignaturas = await response.json();
+                    
+                    modalAsignaturaSelect.innerHTML = '<option value="">-- Seleccione una asignatura --</option>';
+                    asignaturas.forEach(asignatura => {
+                        modalAsignaturaSelect.innerHTML += `<option value="${asignatura.idAsignatura}">${asignatura.nombre}</option>`;
+                    });
+                    modalAsignaturaSelect.disabled = false;
+                } catch (error) {
+                    console.error('Error al cargar asignaturas:', error);
+                    modalAsignaturaSelect.innerHTML = '<option>Error al cargar</option>';
+                }
+            });
+        }
+
+        if (modalAsignaturaSelect) {
+            modalAsignaturaSelect.addEventListener('change', async () => {
+                const asignaturaId = modalAsignaturaSelect.value;
+                modalDocenteSelect.disabled = true;
+                modalDocenteSelect.innerHTML = '<option>Cargando...</option>';
+
+                if (!asignaturaId) {
+                    modalDocenteContainer.style.display = 'none';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/asignaturas/${asignaturaId}/docentes`);
+                    if (!response.ok) throw new Error('La respuesta de la red no fue exitosa.');
+                    const docentes = await response.json();
+                    
+                    modalDocenteSelect.innerHTML = '<option value="">-- Seleccione un docente --</option>';
+                    docentes.forEach(docente => {
+                        modalDocenteSelect.innerHTML += `<option value="${docente.id_docente}">${docente.nombreCompleto}</option>`;
+                    });
+                    modalDocenteContainer.style.display = 'block';
+                    modalDocenteSelect.disabled = false;
+                } catch (error) {
+                    console.error('Error al cargar docentes:', error);
+                    modalDocenteSelect.innerHTML = '<option>Error al cargar</option>';
+                }
+            });
+        }
+
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', () => {
+                const asignaturaId = modalAsignaturaSelect.value;
+                const asignaturaNombre = modalAsignaturaSelect.options[modalAsignaturaSelect.selectedIndex].text;
+                const docenteId = modalDocenteSelect.value;
+                const docenteNombre = modalDocenteSelect.options[modalDocenteSelect.selectedIndex].text;
+                const cupos = modalCuposInput.value;
+                const fechaInicio = modalFechaInicioInput.value;
+                const fechaFin = modalFechaFinInput.value;
+
+                if (!asignaturaId || !docenteId || !cupos || !fechaInicio || !fechaFin) {
+                    alert('Por favor, complete todos los campos, incluyendo las fechas de postulación.');
+                    return;
+                }
+
+                const tagId = `tag-group-${asignaturaIndex}`;
+
+                const tagHTML = `
+                    <div class="asignatura-tag bg-indigo-100 text-indigo-800 text-sm font-medium pl-3 pr-2 py-1 rounded-full flex items-center" data-tag-id="${tagId}">
+                        <span>${asignaturaNombre} - ${docenteNombre} (Cupos: ${cupos})</span>
+                        <button type="button" class="remove-tag-btn ml-2 text-indigo-500 hover:text-indigo-700">&times;</button>
+                    </div>`;
+                tagsContainer.insertAdjacentHTML('beforeend', tagHTML);
+
+                const idInputHTML = `<input type="hidden" name="asignaturas[${asignaturaIndex}].asignaturaId" value="${asignaturaId}" data-tag-id="${tagId}">`;
+                const docenteInputHTML = `<input type="hidden" name="asignaturas[${asignaturaIndex}].docenteId" value="${docenteId}" data-tag-id="${tagId}">`;
+                const cuposInputHTML = `<input type="hidden" name="asignaturas[${asignaturaIndex}].cupos" value="${cupos}" data-tag-id="${tagId}">`;
+                const fechaInicioInputHTML = `<input type="hidden" name="asignaturas[${asignaturaIndex}].fechaInicioPostulacion" value="${fechaInicio}" data-tag-id="${tagId}">`;
+                const fechaFinInputHTML = `<input type="hidden" name="asignaturas[${asignaturaIndex}].fechaFinPostulacion" value="${fechaFin}" data-tag-id="${tagId}">`;
+                mainForm.insertAdjacentHTML('beforeend', idInputHTML + docenteInputHTML + cuposInputHTML + fechaInicioInputHTML + fechaFinInputHTML);
+
+                asignaturaIndex++;
+                closeModal();
+            });
+        }
+
+        if (tagsContainer) {
+            tagsContainer.addEventListener('click', (e) => {
+                const removeBtn = e.target.closest('.remove-tag-btn');
+                if (removeBtn) {
+                    const tagWrapper = removeBtn.closest('.asignatura-tag');
+                    const tagId = tagWrapper.dataset.tagId;
+                    
+                    document.querySelectorAll(`input[data-tag-id="${tagId}"]`).forEach(input => input.remove());
+                    tagWrapper.remove();
+                }
+            });
+        }
+
+        console.log("Script completo del formulario inicializado correctamente.");
+    </script>
+
+</div>
+
+</body>
+</html>

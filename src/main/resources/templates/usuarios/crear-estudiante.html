@@ -1,0 +1,228 @@
+<div class="container mx-auto px-4 py-8" th:fragment="content">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Gestión de Estudiantes</h1>
+    <p class="text-gray-600 mb-4">Aquí podrás crear y gestionar los estudiantes del sistema.</p>
+
+    <button id="open-modal-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        Crear Estudiante
+    </button>
+
+    <div class="mt-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4">Lista de Estudiantes</h2>
+        <div class="bg-white shadow-md rounded-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cédula</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Student rows will be injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="student-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modal-title" class="text-2xl font-bold text-gray-800">Crear Nuevo Estudiante</h2>
+                <button id="close-modal-btn" class="text-gray-600 hover:text-gray-800 text-3xl font-bold">&times;</button>
+            </div>
+            <form id="student-form">
+                <input type="hidden" id="userId" name="userId">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="nombres" class="block text-sm font-medium text-gray-700">Nombres</label>
+                        <input type="text" id="nombres" name="nombres" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required>
+                    </div>
+                    <div>
+                        <label for="apellidos" class="block text-sm font-medium text-gray-700">Apellidos</label>
+                        <input type="text" id="apellidos" name="apellidos" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required>
+                    </div>
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
+                        <input type="email" id="email" name="email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required>
+                    </div>
+                    <div>
+                        <label for="cedula" class="block text-sm font-medium text-gray-700">Cédula</label>
+                        <input type="text" id="cedula" name="cedula" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3" required>
+                    </div>
+                    <div>
+                        <label for="telefono" class="block text-sm font-medium text-gray-700">Teléfono</label>
+                        <input type="tel" id="telefono" name="telefono" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3">
+                    </div>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button type="button" id="cancel-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded mr-2">Cancelar</button>
+                    <button id="submit-btn" type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Crear Estudiante</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const openModalBtn = document.getElementById('open-modal-btn');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const modal = document.getElementById('student-modal');
+            const studentForm = document.getElementById('student-form');
+            const studentTableBody = document.getElementById('student-table-body');
+            const modalTitle = document.getElementById('modal-title');
+            const submitBtn = document.getElementById('submit-btn');
+            const userIdInput = document.getElementById('userId');
+
+            async function loadStudents() {
+                try {
+                    const response = await fetch('/usuarios/estudiantes');
+                    if (!response.ok) throw new Error('Error al cargar estudiantes');
+                    const students = await response.json();
+                    studentTableBody.innerHTML = '';
+                    students.forEach(student => {
+                        const row = document.createElement('tr');
+                        row.dataset.userId = student.idUsuario;
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">${student.nombres} ${student.apellidos}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${student.email}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${student.cedula}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-indigo-600 hover:text-indigo-900 edit-btn">Editar</button>
+                                <button class="text-red-600 hover:text-red-900 ml-4 toggle-active-btn">${student.activo ? 'Desactivar' : 'Activar'}</button>
+                                <button class="text-yellow-600 hover:text-yellow-900 ml-4 force-password-btn" title="Forzar cambio de contraseña"><i class="fas fa-key"></i></button>
+                            </td>
+                        `;
+                        studentTableBody.appendChild(row);
+                    });
+                } catch (error) {
+                    console.error(error);
+                    studentTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Error al cargar estudiantes</td></tr>';
+                }
+            }
+
+            function showModal(editMode = false, user = null) {
+                studentForm.reset();
+                if (editMode && user) {
+                    modalTitle.textContent = 'Editar Estudiante';
+                    submitBtn.textContent = 'Guardar Cambios';
+                    userIdInput.value = user.idUsuario;
+                    document.getElementById('nombres').value = user.nombres;
+                    document.getElementById('apellidos').value = user.apellidos;
+                    document.getElementById('email').value = user.email;
+                    document.getElementById('cedula').value = user.cedula;
+                    document.getElementById('telefono').value = user.telefono;
+                } else {
+                    modalTitle.textContent = 'Crear Nuevo Estudiante';
+                    submitBtn.textContent = 'Crear Estudiante';
+                    userIdInput.value = '';
+                }
+                modal.classList.remove('hidden');
+            }
+
+            function hideModal() {
+                modal.classList.add('hidden');
+            }
+
+            openModalBtn.addEventListener('click', () => showModal(false));
+            closeModalBtn.addEventListener('click', hideModal);
+            cancelBtn.addEventListener('click', hideModal);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideModal();
+                }
+            });
+
+            studentForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const formData = new FormData(studentForm);
+                const data = Object.fromEntries(formData.entries());
+                const userId = userIdInput.value;
+
+                const url = userId ? `/usuarios/${userId}` : '/usuarios/crear-estudiante';
+                const method = userId ? 'PUT' : 'POST';
+
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        window.showAlertModal(userId ? 'Estudiante actualizado correctamente' : 'Estudiante creado correctamente');
+                        hideModal();
+                        loadStudents(); // Refresh student table
+                    } else {
+                        const error = await response.json();
+                        window.showAlertModal(`Error: ${error.message}`);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    window.showAlertModal('Ocurrió un error.');
+                }
+            });
+
+            studentTableBody.addEventListener('click', async (e) => {
+                const row = e.target.closest('tr');
+                if (!row) return;
+                const userId = row.dataset.userId;
+
+                if (e.target.classList.contains('toggle-active-btn')) {
+                    try {
+                        const response = await fetch(`/usuarios/${userId}/toggle-activo`, { method: 'POST' });
+                        if (response.ok) {
+                            loadStudents();
+                        } else {
+                            window.showAlertModal('Error al cambiar el estado del usuario');
+                        }
+                    } catch (error) {
+                        console.error('Error al cambiar el estado:', error);
+                        window.showAlertModal('Ocurrió un error al cambiar el estado del usuario.');
+                    }
+                } else if (e.target.classList.contains('edit-btn')) {
+                    try {
+                        const response = await fetch(`/usuarios/${userId}`);
+                        if (response.ok) {
+                            const user = await response.json();
+                            showModal(true, user);
+                        } else {
+                            window.showAlertModal('Error al obtener los datos del usuario');
+                        }
+                    } catch (error) {
+                        console.error('Error al obtener datos:', error);
+                        window.showAlertModal('Ocurrió un error al obtener los datos del usuario.');
+                    }
+                } else if (e.target.closest('.force-password-btn')) {
+                    window.showConfirmationModal(
+                        '¿Estás seguro de que deseas forzar a este usuario a cambiar su contraseña en el próximo inicio de sesión?',
+                        async () => {
+                            try {
+                                const response = await fetch(`/usuarios/${userId}/force-password-change`, { method: 'POST' });
+                                const result = await response.json();
+                                if (response.ok) {
+                                    window.showAlertModal(result.message);
+                                } else {
+                                    throw new Error(result.message || 'Error al forzar el cambio de contraseña');
+                                }
+                            } catch (error) {
+                                console.error('Error:', error);
+                                window.showAlertModal('Ocurrió un error: ' + error.message);
+                            }
+                        }
+                    );
+                }
+            });
+
+            loadStudents();
+        })();
+    </script>
+</div>

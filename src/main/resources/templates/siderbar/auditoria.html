@@ -1,0 +1,94 @@
+<!--
+* Copyright 2024, Confidential
+* All rights reserved.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+-->
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="content">
+        <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+            <h1 class="text-2xl font-bold mb-6">Auditoría del Sistema</h1>
+
+            <!-- Filtros -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6 flex flex-wrap items-center gap-4">
+                <!-- Filtro de Fecha Inicio -->
+                <div class="flex-grow">
+                    <label for="filter-start-date" class="block text-sm font-medium text-gray-700">Fecha Inicio</label>
+                    <input type="date" id="filter-start-date" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <!-- Filtro de Fecha Fin -->
+                <div class="flex-grow">
+                    <label for="filter-end-date" class="block text-sm font-medium text-gray-700">Fecha Fin</label>
+                    <input type="date" id="filter-end-date" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <!-- Filtro de Usuario -->
+                <div class="flex-grow">
+                    <label for="filter-user" class="block text-sm font-medium text-gray-700">Usuario</label>
+                    <input type="text" id="filter-user" placeholder="Nombre de usuario" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                </div>
+                <!-- Filtro de Tipo -->
+                <div class="flex-grow">
+                    <label for="filter-type" class="block text-sm font-medium text-gray-700">Tipo de Acción</label>
+                    <select id="filter-type" class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                        <option value="">Todos</option>
+                        <option value="I">Insertar</option>
+                        <option value="U">Actualizar</option>
+                        <option value="D">Eliminar</option>
+                    </select>
+                </div>
+                <!-- Botones -->
+                <div class="flex items-end gap-2">
+                    <button id="btn-apply-filters" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        <i class="fas fa-filter mr-2"></i>Filtrar
+                    </button>
+                    <button id="btn-clear-filters" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+                        <i class="fas fa-times mr-2"></i>Limpiar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Botones de Pestañas -->
+            <div class="flex flex-wrap gap-2 mb-6">
+                <button data-endpoint="/api/audit/actividad-ayudante" class="audit-tab bg-gray-200 hover:bg-blue-500 text-gray-800 hover:text-white font-bold py-2 px-4 rounded transition duration-300">
+                    Actividad Ayudante
+                </button>
+                <button data-endpoint="/api/audit/ayudante-catedra" class="audit-tab bg-gray-200 hover:bg-blue-500 text-gray-800 hover:text-white font-bold py-2 px-4 rounded transition duration-300">
+                    Ayudante Cátedra
+                </button>
+                <button data-endpoint="/api/audit/evaluacion-meritos" class="audit-tab bg-gray-200 hover:bg-blue-500 text-gray-800 hover:text-white font-bold py-2 px-4 rounded transition duration-300">
+                    Evaluación Méritos
+                </button>
+                <button data-endpoint="/api/audit/postulaciones" class="audit-tab bg-gray-200 hover:bg-blue-500 text-gray-800 hover:text-white font-bold py-2 px-4 rounded transition duration-300">
+                    Postulaciones
+                </button>
+                <button data-endpoint="/api/audit/prueba-oposicion" class="audit-tab bg-gray-200 hover:bg-blue-500 text-gray-800 hover:text-white font-bold py-2 px-4 rounded transition duration-300">
+                    Prueba Oposición
+                </button>
+                <button data-endpoint="/api/audit/resultados" class="audit-tab bg-gray-200 hover:bg-blue-500 text-gray-800 hover:text-white font-bold py-2 px-4 rounded transition duration-300">
+                    Resultados
+                </button>
+                <button data-endpoint="/api/audit/roles" class="audit-tab bg-gray-200 hover:bg-blue-500 text-gray-800 hover:text-white font-bold py-2 px-4 rounded transition duration-300">
+                    Roles
+                </button>
+            </div>
+
+            <!-- Contenedor de la Tabla -->
+            <div id="audit-table-container" class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
+                <p id="audit-placeholder" class="text-gray-500">Seleccione una categoría de auditoría para ver los datos.</p>
+                <table id="audit-table" class="min-w-full bg-white hidden">
+                    <thead id="audit-table-head" class="bg-gray-100">
+                        <!-- Las cabeceras se generarán dinámicamente -->
+                    </thead>
+                    <tbody id="audit-table-body">
+                        <!-- Las filas de datos se generarán dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <script th:src="@{/js/gestion-auditoria.js}"></script>
+    </div>
+</body>
+</html>

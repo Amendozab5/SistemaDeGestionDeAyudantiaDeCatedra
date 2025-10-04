@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content">
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Mis Pruebas de Oposición Agendadas</h1>
+
+    <div th:if="${pruebas == null || pruebas.isEmpty()}" class="bg-white p-6 rounded-lg shadow-md text-center">
+        <p class="text-gray-600">No tienes ninguna prueba de oposición agendada por el momento.</p>
+    </div>
+
+    <div th:unless="${pruebas == null || pruebas.isEmpty()}" class="bg-white rounded-lg shadow-md overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha de Oposición</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <tr th:each="prueba : ${pruebas}">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900" th:text="${prueba.titulo}"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-normal">
+                        <div class="text-sm text-gray-600" th:text="${prueba.descripcion}"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm text-gray-900" th:text="${#temporals.format(prueba.fechaOposicion, 'dd/MM/yyyy HH:mm')}"></div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                              th:text="${prueba.estado}"
+                              th:classappend="${#strings.equals(prueba.estado, 'AGENDADA')} ? 'bg-yellow-100 text-yellow-800' :
+                                             (${#strings.equals(prueba.estado, 'CALIFICADA')} ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800')">
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

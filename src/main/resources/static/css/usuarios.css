@@ -1,0 +1,21 @@
+/* Card header layout */
+.card-header .btn-group { gap: .5rem; }
+
+/* Toolbar gaps en móvil */
+ @media (max-width: 768px){
+  .toolbar .form-control,
+  .toolbar .form-select { margin-bottom: .5rem; }
+}
+
+/* Truncado elegante de celdas */
+.table .text-truncate { max-width: 100%; }
+
+/* Drawer panel */
+#drawer-usuario { box-shadow: -12px 0 24px rgba(0,0,0,.08); }
+#drawer-overlay.backdrop { background: rgba(0,0,0,.4); backdrop-filter: blur(2px); }
+
+/* Pagínación compacta */
+.pagination .page-link { min-width: 84px; text-align: center; }
+
+/* Estados */
+.badge.bg-success, .badge.bg-warning, .badge.bg-danger { font-weight: 600; }

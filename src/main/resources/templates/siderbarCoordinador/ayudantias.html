@@ -1,0 +1,135 @@
+<div th:fragment="content" class="p-6 bg-gray-100 min-h-screen">
+    <meta name="_csrf" th:content="${csrf_token}"/>
+    <meta name="_csrf_header" th:content="${csrf_header}"/>
+    <div class="container mx-auto">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">Gestión de Ayudantes de Cátedra</h1>
+            <p class="mt-2 text-gray-600">Aquí puede convertir a los postulantes ganadores en Ayudantes de Cátedra.</p>
+        </div>
+
+        <!-- Tabla de Ganadores -->
+        <div class="mt-8 bg-white rounded-lg shadow-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-xl font-semibold text-gray-800">Postulantes Ganadores Pendientes de Conversión</h2>
+            </div>
+            <div class="p-4">
+                <div class="overflow-x-auto">
+                    <div class="align-middle inline-block min-w-full">
+                        <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200" id="dataTableGanadores">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Estudiante
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Cédula
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Carrera
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Asignatura
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Puntaje Final
+                                        </th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                            Acciones
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <tr th:each="postulacion : ${ganadores}" th:id="'row-' + ${postulacion.idPostulacion}" class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm font-medium text-gray-900" th:text="${postulacion.estudiante.usuario.nombres} + ' ' + ${postulacion.estudiante.usuario.apellidos}"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900" th:text="${postulacion.estudiante.usuario.cedula}"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900" th:text="${postulacion.estudiante.carrera.carrera}"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="text-sm text-gray-900" th:text="${postulacion.asignatura.nombre}"></div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800" th:text="${#numbers.formatDecimal(postulacion.resultado.puntajeTotalFinal, 1, 2)}">
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="btn-convertir inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                                                    th:attr="data-postulacion-id=${postulacion.idPostulacion}">
+                                                <i class="fas fa-check mr-2"></i> Convertir a Ayudante
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(ganadores)}">
+                                        <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">
+                                            <div class="flex justify-center items-center flex-col">
+                                                <i class="fas fa-folder-open fa-3x text-gray-400"></i>
+                                                <p class="mt-4">No hay postulantes ganadores pendientes de conversión.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+    const table = document.getElementById('dataTableGanadores');
+    if (table) {
+        // CSRF token setup
+        const csrfToken = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+
+        table.addEventListener('click', function (event) {
+            const button = event.target.closest('.btn-convertir');
+            if (button) {
+                const postulacionId = button.dataset.postulacionId;
+                
+                if (confirm('¿Estás seguro de que deseas convertir a este estudiante en Ayudante de Cátedra? Esta acción es irreversible.')) {
+                    button.disabled = true;
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Procesando...';
+
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    headers[csrfHeader] = csrfToken;
+
+                    fetch(`/coordinador/ayudantes/convertir/${postulacionId}`, {
+                        method: 'POST',
+                        headers: headers
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(err => { throw new Error(err.error || 'Error desconocido'); });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        showToast(data.message, 'success');
+                        // Eliminar la fila de la tabla
+                        const row = document.getElementById('row-' + postulacionId);
+                        if (row) {
+                            row.remove();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('Error al procesar la solicitud: ' + error.message, 'error');
+                        button.disabled = false;
+                        button.innerHTML = '<i class="fas fa-check"></i> Convertir a Ayudante';
+                    });
+                }
+            }
+        });
+    }
+    </script>
+
+</div>

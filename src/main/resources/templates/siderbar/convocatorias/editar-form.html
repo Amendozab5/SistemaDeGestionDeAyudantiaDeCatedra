@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+  <div th:fragment="content">
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Editar Convocatoria</h2>
+            
+            <form th:action="@{/convocatorias/actualizar}" th:object="${convocatoria}" method="post">
+                <input type="hidden" th:field="*{idConvocatoria}"/>
+
+                <!-- Título -->
+                <div class="mb-4">
+                    <label for="titulo" class="block text-gray-700 text-sm font-bold mb-2">Título de la Convocatoria:</label>
+                    <input type="text" id="titulo" th:field="*{titulo}" class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                </div>
+
+                <!-- Descripción -->
+                <div class="mb-4">
+                    <label for="descripcion" class="block text-gray-700 text-sm font-bold mb-2">Descripción:</label>
+                    <textarea id="descripcion" th:field="*{descripcion}" rows="4" class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500" required></textarea>
+                </div>
+
+                <!-- Periodo, Fecha Inicio, Fecha Fin -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label for="periodo" class="block text-gray-700 text-sm font-bold mb-2">Periodo Académico:</label>
+                        <select id="periodo" th:field="*{periodo}" class="shadow-sm border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500">
+                            <option value="2025-2026">2025-2026</option>
+                            <option value="2026-2027">2026-2027</option>
+                            <option value="2027-2028">2027-2028</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="fecha-inicio" class="block text-gray-700 text-sm font-bold mb-2">Inicio del Proceso:</label>
+                        <input type="date" id="fecha-inicio" th:field="*{fechaInicio}" class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                    <div>
+                        <label for="fecha-fin" class="block text-gray-700 text-sm font-bold mb-2">Cierre del Proceso:</label>
+                        <input type="date" id="fecha-fin" th:field="*{fechaFin}" class="shadow-sm appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-green-500">
+                    </div>
+                </div>
+
+                <!-- Estado -->
+                <div class="mb-4">
+                    <label class="block text-gray-700 text-sm font-bold mb-2">Estado:</label>
+                    <div class="flex items-center">
+                        <input type="radio" th:field="*{estado}" value="false" class="mr-2">
+                        <label class="mr-4">Borrador</label>
+                        <input type="radio" th:field="*{estado}" value="true" class="mr-2">
+                        <label>Publicada</label>
+                    </div>
+                </div>
+
+                <!-- Botones de Acción -->
+                <div class="flex items-center justify-end space-x-4 pt-4 border-t mt-6">
+                    <a th:href="@{/homeAdmin}" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Cancelar</a>
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg">Actualizar Convocatoria</button>
+                </div>
+            </form>
+        </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+    <div th:fragment="content">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Tribunal de Oposición</h1>
+
+        <div th:if="${successMessage}" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline" th:text="${successMessage}"></span>
+        </div>
+        <div th:if="${errorMessage}" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline" th:text="${errorMessage}"></span>
+        </div>
+
+        <div th:if="${tribunales.isEmpty()}" class="bg-white p-6 rounded-lg shadow-md">
+            <p class="text-gray-600">No tiene asignadas pruebas de oposición como tribunal.</p>
+        </div>
+
+        <div th:unless="${tribunales.isEmpty()}" class="bg-white p-6 rounded-lg shadow-md">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Postulante
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Asignatura
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Fecha de Oposición
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Estado
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr th:each="tribunal : ${tribunales}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div th:text="${tribunal.postulanteNombre}"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div th:text="${tribunal.asignaturaNombre}"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div th:text="${#temporals.format(tribunal.pruebaOposicion.fechaOposicion, 'yyyy-MM-dd HH:mm')}"></div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                      th:classappend="${tribunal.pruebaOposicion.estado == 'AGENDADA' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}"
+                                      th:text="${tribunal.pruebaOposicion.estado}"></span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium flex items-center space-x-2">
+                                <button class="calificar-btn font-bold py-2 px-4 rounded"
+                                        th:data-id_oposicion="${tribunal.pruebaOposicion.idOposicion}"
+                                        th:classappend="${tribunal.pruebaOposicion.estado == 'AGENDADA' ? 'bg-blue-500 hover:bg-blue-700 text-white' : 'bg-gray-400 text-white cursor-not-allowed'}"
+                                        th:disabled="${tribunal.pruebaOposicion.estado != 'AGENDADA'}">
+                                    Calificar
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Calificar Modal -->
+        <div id="calificar-modal" class="fixed z-10 inset-0 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <form id="calificar-form" method="post">
+                        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">Calificar Prueba de Oposición</h3>
+                            <div class="mt-2">
+                                <div class="mb-4 p-3 bg-gray-100 rounded-lg">
+                                    <p class="text-sm font-medium text-gray-800">Postulante: <span id="modal-postulante-nombre" class="font-normal"></span></p>
+                                    <p class="text-sm font-medium text-gray-800">Asignatura: <span id="modal-asignatura-nombre" class="font-normal"></span></p>
+                                </div>
+                        
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="material_puntos" class="block text-sm font-medium text-gray-700">Puntaje Material Didáctico (Máx. 10)</label>
+                                        <input type="number" name="material_puntos" id="material_puntos" min="0" max="10" step="0.1" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="calidad_puntos" class="block text-sm font-medium text-gray-700">Puntaje Calidad de Exposición (Máx. 4)</label>
+                                        <input type="number" name="calidad_puntos" id="calidad_puntos" min="0" max="4" step="0.1" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="respuestas_puntos" class="block text-sm font-medium text-gray-700">Puntaje Respuestas a Preguntas (Máx. 6)</label>
+                                        <input type="number" name="respuestas_puntos" id="respuestas_puntos" min="0" max="6" step="0.1" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                    </div>
+                                    <div>
+                                        <label for="comentarios" class="block text-sm font-medium text-gray-700">Comentarios</label>
+                                        <textarea name="comentarios" id="comentarios" rows="3" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"></textarea>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-6 p-3 bg-blue-50 border-l-4 border-blue-400">
+                                    <p class="text-lg font-bold text-blue-800">Puntaje Individual Total: <span id="puntaje-total-display">0</span> / 20</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                            <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 sm:ml-3 sm:w-auto sm:text-sm">
+                                Guardar Calificación
+                            </button>
+                            <button type="button" id="cancel-calificar-button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const modal = document.getElementById('calificar-modal');
+            if (modal) {
+                const form = document.getElementById('calificar-form');
+                const cancelButton = document.getElementById('cancel-calificar-button');
+                const postulanteNombreSpan = document.getElementById('modal-postulante-nombre');
+                const asignaturaNombreSpan = document.getElementById('modal-asignatura-nombre');
+                
+                const materialPuntosInput = document.getElementById('material_puntos');
+                const calidadPuntosInput = document.getElementById('calidad_puntos');
+                const respuestasPuntosInput = document.getElementById('respuestas_puntos');
+                const puntajeTotalDisplay = document.getElementById('puntaje-total-display');
+
+                function calcularTotal() {
+                    const material = parseFloat(materialPuntosInput.value) || 0;
+                    const calidad = parseFloat(calidadPuntosInput.value) || 0;
+                    const respuestas = parseFloat(respuestasPuntosInput.value) || 0;
+                    const total = material + calidad + respuestas;
+                    puntajeTotalDisplay.textContent = total.toFixed(2);
+                }
+
+                [materialPuntosInput, calidadPuntosInput, respuestasPuntosInput].forEach(input => {
+                    input.addEventListener('input', calcularTotal);
+                });
+
+                document.querySelectorAll('.calificar-btn').forEach(button => {
+                    button.addEventListener('click', () => {
+                        if (button.disabled) return;
+
+                        form.reset();
+                        puntajeTotalDisplay.textContent = '0';
+
+                        const oposicionId = button.getAttribute('data-id_oposicion');
+                        const row = button.closest('tr');
+                        const postulanteNombre = row.cells[0].textContent.trim();
+                        const asignaturaNombre = row.cells[1].textContent.trim();
+
+                        postulanteNombreSpan.textContent = postulanteNombre;
+                        asignaturaNombreSpan.textContent = asignaturaNombre;
+                        
+                        form.action = `/docente/tribunal/calificar/${oposicionId}`;
+                        modal.classList.remove('hidden');
+                    });
+                });
+
+                cancelButton.addEventListener('click', () => {
+                    modal.classList.add('hidden');
+                });
+
+                modal.addEventListener('click', (event) => {
+                    if (event.target === modal) {
+                        modal.classList.add('hidden');
+                    }
+                });
+            }
+        </script>
+    </div>
+</body>
+</html>

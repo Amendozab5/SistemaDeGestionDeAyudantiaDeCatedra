@@ -1,0 +1,129 @@
+<!-- Contenedor de Alertas -->
+<div class="w-full mx-auto mb-4">
+    <!-- Alerta de Éxito -->
+    <div th:if="${success}" class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md shadow-md" role="alert">
+        <p class="font-bold">Éxito</p>
+        <p th:text="${success}"></p>
+    </div>
+
+    <!-- Alerta de Error -->
+    <div th:if="${error}" class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md" role="alert">
+        <p class="font-bold">Error</p>
+        <p th:text="${error}"></p>
+    </div>
+</div>
+
+<!-- Estilos para la personalización del perfil -->
+<style>
+    .profile-banner {
+        background-image: url('https://images.unsplash.com/photo-1753010835776-3fd4bf38ef3c?q=80&w=870&auto=format&fit=crop');
+
+        background-size: cover;
+        background-position: center;
+    }
+    .profile-avatar-container {
+        border: 4px solid white;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .upload-overlay {
+        transition: opacity 0.3s ease-in-out;
+    }
+</style>
+
+<div class="w-full mx-auto">
+    <!-- Tarjeta de Cabecera del Perfil -->
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden mb-8">
+        <div class="profile-banner h-32 sm:h-40"></div>
+        <div class="p-6">
+            <div class="sm:flex sm:items-end sm:space-x-5 -mt-20 sm:-mt-24">
+                
+                <!-- Avatar y Botón de Subida -->
+                <div class="relative w-28 h-28 flex-shrink-0 mx-auto sm:mx-0">
+                    <form id="photo-upload-form" class="hidden">
+                        <input type="file" id="photo-input" name="photo" accept="image/*">
+                    </form>
+
+                    <!-- Contenedor del Avatar -->
+                    <div id="avatar-container" class="relative w-28 h-28 rounded-full profile-avatar-container cursor-pointer group">
+                        <!-- Imagen de Perfil -->
+                        <img id="profile-photo" 
+                             th:src="${usuario.fotoUrl != null ? usuario.fotoUrl : ''}" 
+                             alt="Foto de perfil" 
+                             class="w-full h-full rounded-full object-cover"
+                             th:classappend="${usuario.fotoUrl == null} ? 'hidden' : ''"/>
+
+                        <!-- Iniciales (si no hay foto) -->
+                        <div id="profile-initials" 
+                             class="w-full h-full bg-blue-600 rounded-full flex items-center justify-center text-white text-5xl font-bold"
+                             th:text="${usuario?.nombres != null ? #strings.substring(usuario.nombres, 0, 1) : '?'}"
+                             th:classappend="${usuario.fotoUrl != null} ? 'hidden' : ''"> 
+                        </div>
+
+                        <!-- Overlay para subir foto -->
+                        <div id="upload-trigger" class="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 upload-overlay">
+                            <i class="fas fa-camera text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nombre y Carrera -->
+                <div class="mt-3 sm:mt-0 sm:pb-4 text-center sm:text-left">
+                    <h2 class="text-2xl font-bold text-gray-800" th:text="|${usuario?.nombres} ${usuario?.apellidos}|">Nombre Apellido</h2>
+                    <p class="text-md text-gray-600" th:text="${estudiante?.carrera?.carrera}">Carrera del Estudiante</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Columna Izquierda (sin cambios) -->
+        <div class="lg:col-span-1 flex flex-col gap-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">Detalles de la Cuenta</h3>
+                <ul class="space-y-4 text-gray-700">
+                    <li class="flex items-center"><i class="fas fa-id-card w-6 text-blue-500"></i><span class="ml-3 font-medium">Cédula:</span><span class="ml-auto text-gray-500" th:text="${usuario?.cedula}"></span></li>
+                    <li class="flex items-center"><i class="fas fa-envelope w-6 text-blue-500"></i><span class="ml-3 font-medium">Email:</span><span class="ml-auto text-gray-500 truncate" th:text="${usuario?.email}"></span></li>
+                    <li class="flex items-center"><i class="fas fa-user-circle w-6 text-blue-500"></i><span class="ml-3 font-medium">Usuario:</span><span class="ml-auto text-gray-500" th:text="${usuario?.username}"></span></li>
+                </ul>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2 mb-4">Estado Académico</h3>
+                <ul class="space-y-4 text-gray-700">
+                    <li class="flex items-center"><i class="fas fa-star w-6 text-yellow-500"></i><span class="ml-3 font-medium">Promedio:</span><span class="ml-auto font-bold text-lg text-green-600" th:text="${estudiante?.promedioGeneral != null ? estudiante.promedioGeneral : 'N/A'}"></span></li>
+                    <li class="flex items-center"><i class="fas fa-check-circle w-6 text-green-500"></i><span class="ml-3 font-medium">Estado:</span><span class="ml-auto px-3 py-1 text-sm font-semibold rounded-full" th:classappend="${estudiante?.esRegular} ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'" th:text="${estudiante?.esRegular} ? 'Regular' : 'No Regular'"></span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Columna Derecha (sin cambios) -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-md p-6 h-full">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Seguridad</h3>
+                <form id="change-password-form" action="/estudiante/change-password" method="post">
+                    <h4 class="text-lg font-medium text-gray-700 mb-4">Cambiar Contraseña</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="current-password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña Actual</label>
+                            <input type="password" id="current-password" name="currentPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="new-password" class="block text-sm font-medium text-gray-700 mb-1">Nueva Contraseña</label>
+                                <input type="password" id="new-password" name="newPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition">
+                            </div>
+                            <div>
+                                <label for="confirm-password" class="block text-sm font-medium text-gray-700 mb-1">Confirmar Nueva Contraseña</label>
+                                <input type="password" id="confirm-password" name="confirmPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 transition">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-6 text-right">
+                        <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition">Actualizar Contraseña</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+

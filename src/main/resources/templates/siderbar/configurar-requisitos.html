@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content">
+    <h1 class="text-2xl font-bold mb-6">Gestión de Requisitos de Ayudantía</h1>
+
+    <!-- Formulario para Añadir/Editar Requisitos -->
+    <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+        <h2 class="text-xl font-semibold mb-4" id="form-title">Añadir Nuevo Requisito</h2>
+        <form id="requisito-form" enctype="multipart/form-data">
+            <input type="hidden" id="requisito-id"/>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Columna 1 -->
+                <div>
+                    <div class="mb-4">
+                        <label for="requisito-descripcion" class="block text-gray-700 text-sm font-bold mb-2">Descripción del Requisito:</label>
+                        <textarea id="requisito-descripcion" rows="3" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label for="requisito-tipo" class="block text-gray-700 text-sm font-bold mb-2">Tipo de Requisito:</label>
+                        <select id="requisito-tipo" class="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                            <option value="REGLAMENTARIO">Requisito Reglamentario</option>
+                            <option value="DOCUMENTO_OBLIGATORIO">Documento Obligatorio</option>
+                            <option value="DOCUMENTO_OPCIONAL">Documento Opcional</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Columna 2 -->
+                <div>
+                    <div class="mb-4">
+                        <label for="requisito-plantilla" class="block text-gray-700 text-sm font-bold mb-2">Plantilla Descargable (Opcional):</label>
+                        <input type="file" id="requisito-plantilla" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"/>
+                        <p class="text-xs text-gray-500 mt-1">Sube un archivo si este requisito necesita un formato (e.g., Solicitud.pdf).</p>
+                        <div id="plantilla-actual-container" class="mt-2 hidden">
+                            <span class="text-sm font-medium">Plantilla actual: </span>
+                            <a href="#" id="plantilla-actual-link" target="_blank" class="text-blue-600 hover:underline"></a>
+                        </div>
+                    </div>
+                    <div class="mb-4 flex items-center">
+                        <input type="checkbox" id="requisito-activo" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>
+                        <label for="requisito-activo" class="ml-2 block text-sm text-gray-900">Requisito Activo</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end space-x-4 mt-4">
+                <button type="button" id="cancel-edit-btn" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline hidden">Cancelar</button>
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Guardar Requisito</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Requisitos -->
+    <div class="bg-white p-6 rounded-lg shadow-md overflow-x-auto">
+        <h2 class="text-xl font-semibold mb-4">Requisitos Actuales</h2>
+        <table class="min-w-full bg-white">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descripción</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th class="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plantilla</th>
+                    <th class="py-3 px-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="requisitos-list" class="divide-y divide-gray-200">
+                <!-- Los datos se cargarán dinámicamente, pero aquí un ejemplo con Thymeleaf -->
+                <tr th:each="req : ${requisitos}" th:id="'req-' + ${req.id}">
+                    <td class="py-4 px-4" th:text="${req.descripcion}"></td>
+                    <td class="py-4 px-4">
+                        <span th:text="${req.tipo == 'REGLAMENTARIO' ? 'Reglamentario' : (req.tipo == 'DOCUMENTO_OBLIGATORIO' ? 'Doc. Obligatorio' : 'Doc. Opcional')}"
+                              th:classappend="${req.tipo == 'REGLAMENTARIO' ? 'bg-yellow-100 text-yellow-800' : (req.tipo == 'DOCUMENTO_OBLIGATORIO' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800')}"
+                              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                        </span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span th:text="${req.activo ? 'Activo' : 'Inactivo'}"
+                              th:classappend="${req.activo ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}"
+                              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full">
+                        </span>
+                    </td>
+                    <td class="py-4 px-4">
+                        <a th:if="${req.urlPlantilla}" th:href="@{${req.urlPlantilla}}" target="_blank" class="text-blue-500 hover:underline">Descargar</a>
+                        <span th:unless="${req.urlPlantilla}" class="text-gray-400">N/A</span>
+                    </td>
+                    <td class="py-4 px-4 text-center flex justify-center space-x-2">
+                        <button th:data-id="${req.id}" th:data-descripcion="${req.descripcion}" th:data-tipo="${req.tipo}" th:data-activo="${req.activo}" th:data-url-plantilla="${req.urlPlantilla}" onclick="editRequisito(this)" class="text-blue-500 hover:text-blue-700" title="Editar"><i class="fas fa-edit"></i></button>
+                        <button th:onclick="'toggleRequisitoStatus(' + ${req.id} + ', ' + ${!req.activo} + ')'" class="text-gray-500 hover:text-gray-700" th:title="${req.activo ? 'Desactivar' : 'Activar'}">
+                            <i th:class="${req.activo ? 'fas fa-toggle-on' : 'fas fa-toggle-off'}"></i>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+      (function() {
+        const API_URL = '/api/requisitos';
+
+        const form = document.getElementById('requisito-form');
+        const formTitle = document.getElementById('form-title');
+        const requisitoId = document.getElementById('requisito-id');
+        const requisitoDescripcion = document.getElementById('requisito-descripcion');
+        const requisitoTipo = document.getElementById('requisito-tipo');
+        const requisitoPlantilla = document.getElementById('requisito-plantilla');
+        const requisitoActivo = document.getElementById('requisito-activo');
+        const cancelBtn = document.getElementById('cancel-edit-btn');
+        const plantillaActualContainer = document.getElementById('plantilla-actual-container');
+        const plantillaActualLink = document.getElementById('plantilla-actual-link');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            try {
+                console.log('Iniciando guardado...');
+                const id = requisitoId.value;
+                const method = id ? 'PUT' : 'POST';
+                const url = id ? `${API_URL}/${id}` : API_URL;
+
+                const requisitoDto = {
+                    descripcion: requisitoDescripcion.value,
+                    tipo: requisitoTipo.value,
+                    activo: requisitoActivo.checked
+                };
+
+                const formData = new FormData(form);
+                formData.append('requisito', new Blob([JSON.stringify(requisitoDto)], { type: 'application/json' }));
+
+                if (requisitoPlantilla.files.length > 0) {
+                    formData.append('archivo', requisitoPlantilla.files[0]);
+                }
+
+                console.log('Enviando datos... Método:', method, 'URL:', url);
+                console.log('Datos DTO:', requisitoDto);
+
+                const response = await fetch(url, {
+                    method: method,
+                    body: formData,
+                    redirect: 'manual'
+                });
+
+                console.log('Respuesta recibida del servidor.');
+                console.log('Status:', response.status);
+                console.log('StatusText:', response.statusText);
+                console.log('OK:', response.ok);
+                console.log('Type:', response.type);
+                console.log('URL de respuesta:', response.url);
+
+                if (response.type === 'opaqueredirect') {
+                    console.error('¡ERROR: El servidor intentó redirigir! Esta es la causa del problema.');
+                    showAlertModal('Error: El servidor redirigió inesperadamente. Revisa la consola (F12) para más detalles.');
+                    return;
+                }
+
+                if (!response.ok) {
+                    console.error('La respuesta del servidor no fue OK.');
+                    const errorText = await response.text();
+                    console.error('Texto del error:', errorText);
+                    showAlertModal(`Error del servidor: ${response.status} ${response.statusText}. Revisa la consola (F12).`);
+                    return;
+                }
+                
+                console.log('La respuesta del servidor fue OK. Procesando...');
+                const result = await response.json();
+                console.log('Respuesta JSON:', result);
+                
+                showAlertModal('Requisito guardado con éxito.');
+                handleLinkClick('configuracion-requisitos', false);
+
+            } catch (error) {
+                console.error('Ocurrió un error en el bloque catch principal:', error);
+                showAlertModal('Ocurrió un error inesperado. Revisa la consola (F12) para más detalles.');
+            }
+        });
+
+        window.editRequisito = function(button) {
+            const id = button.dataset.id;
+            const descripcion = button.dataset.descripcion;
+            const tipo = button.dataset.tipo;
+            const activo = button.dataset.activo === 'true';
+            const urlPlantilla = button.dataset.urlPlantilla;
+
+            formTitle.textContent = 'Editar Requisito';
+            requisitoId.value = id;
+            requisitoDescripcion.value = descripcion;
+            requisitoTipo.value = tipo;
+            requisitoActivo.checked = activo;
+            
+            if (urlPlantilla && urlPlantilla !== 'null') {
+                plantillaActualLink.href = urlPlantilla;
+                plantillaActualLink.textContent = urlPlantilla.split('/').pop();
+                plantillaActualContainer.classList.remove('hidden');
+            } else {
+                plantillaActualContainer.classList.add('hidden');
+            }
+
+            cancelBtn.classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function resetForm() {
+            form.reset();
+            formTitle.textContent = 'Añadir Nuevo Requisito';
+            requisitoId.value = '';
+            requisitoActivo.checked = true;
+            plantillaActualContainer.classList.add('hidden');
+            cancelBtn.classList.add('hidden');
+        }
+
+        cancelBtn.addEventListener('click', resetForm);
+
+        window.toggleRequisitoStatus = async function(id, nuevoEstado) {
+            const action = nuevoEstado ? 'activar' : 'desactivar';
+            showConfirmationModal(`¿Estás seguro de que deseas ${action} este requisito?`, async () => {
+                try {
+                    const response = await fetch(`${API_URL}/${id}/estado`, { 
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ activo: nuevoEstado })
+                    });
+                    if (!response.ok) throw new Error(`Error al ${action} el requisito`);
+                    
+                    showAlertModal(`Requisito ${action}do con éxito.`);
+                    handleLinkClick('configuracion-requisitos', false);
+
+                } catch (error) {
+                    console.error(error);
+                    showAlertModal(error.message);
+                }
+            });
+        }
+      })();
+    </script>
+</div>
+</body>
+</html>

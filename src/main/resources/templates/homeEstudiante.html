@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Académico - Estudiante</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    .sidebar-scroll::-webkit-scrollbar { width: 5px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 10px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: #2d3748; }
+    #notification-panel {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        width: 320px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        z-index: 50;
+        color: #000;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div class="flex h-screen bg-gray-200">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-800 text-white flex-shrink-0 sidebar-scroll overflow-y-auto">
+        <div class="p-4 border-b border-gray-700">
+            <div class="flex items-center">
+                <i class="fas fa-graduation-cap text-2xl text-green-400"></i>
+                <div class="ml-3">
+                    <h1 class="text-lg font-bold">SGAAC</h1>
+                    <p class="text-xs text-gray-400">Gestión de Ayudantías</p>
+                </div>
+            </div>
+        </div>
+        <nav class="mt-4">
+            <ul class="flex flex-col space-y-2 px-2">
+                <li><a href="#" id="dashboard-link" class="flex items-center py-2 px-4 bg-gray-700 rounded-md text-white"><i class="fas fa-tachometer-alt w-6"></i><span class="ml-3">Panel Principal</span></a></li>
+                <li><a href="#" id="perfil-link" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-user-cog w-6"></i><span class="ml-3">Mi Perfil</span></a></li>
+                <li><a href="#" id="postulaciones-link" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-paper-plane w-6"></i><span class="ml-3">Postular a Ayudantía</span></a></li>
+                <li><a href="#" id="mis-postulaciones-link" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-file-alt w-6"></i><span class="ml-3">Mis Postulaciones</span></a></li>
+                <li><a href="#" id="pruebas-link" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-calendar-check w-6"></i><span class="ml-3">Mis Pruebas</span></a></li>
+                
+                <!-- Opciones de Ayudante de Cátedra -->
+                <div th:if="${userRole == 'AYUDANTE'}">
+                    <li class="pt-4 mt-4 border-t border-gray-700">
+                        <span class="px-4 pt-2 text-xs text-gray-400 font-bold uppercase">Panel de Ayudante</span>
+                    </li>
+                    <li>
+                        <a href="#" id="gestion-actividades-link" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700">
+                            <i class="fas fa-tasks w-6"></i>
+                            <span class="ml-3">Gestionar Actividades</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="aula-link" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700">
+                            <i class="fas fa-chalkboard-teacher w-6"></i>
+                            <span class="ml-3">Aula</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="horario-link" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700">
+                            <i class="fas fa-clock w-6"></i>
+                            <span class="ml-3">Horario</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="foro-link" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700">
+                            <i class="fas fa-comments w-6"></i>
+                            <span class="ml-3">Foros de Asignatura</span>
+                        </a>
+                    </li>
+                </div>
+
+                <li class="pt-4 mt-4 border-t border-gray-700"><a href="/logout" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-sign-out-alt w-6"></i><span class="ml-3">Cerrar Sesión</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Content wrapper -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="bg-white shadow z-10">
+            <div class="container mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div id="header-title" class="text-xl font-semibold text-gray-700">Panel del Estudiante</div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button id="notification-bell" class="text-gray-600 hover:text-gray-800 focus:outline-none relative">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span id="notification-count" class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white hidden">0</span>
+                            </button>
+                            <div id="notification-panel">
+                                <div class="p-3 border-b font-bold text-sm">Notificaciones</div>
+                                <div id="notifications-list">
+                                    <p class="text-sm text-gray-500 p-4 text-center">No hay notificaciones nuevas.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div id="header-avatar-container" class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold bg-purple-500 overflow-hidden">
+                                <img id="header-avatar-photo" th:if="${fotoUrl}" th:src="${fotoUrl}" alt="Foto de perfil" class="w-full h-full object-cover">
+                                <div id="header-avatar-initials" th:unless="${fotoUrl}" th:text="${userInitial}">E</div>
+                            </div>
+                            <span class="ml-3 text-gray-700" th:text="${username}">Estudiante</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-6">
+            <div id="dashboard-content" class="container mx-auto">
+                 <!-- Contenido del dashboard se cargará aquí -->
+            </div>
+            <!-- Panel para contenido dinámico -->
+            <div id="postulaciones-panel" class="container mx-auto hidden"></div>
+            <div id="perfil-panel" class="container mx-auto hidden"></div>
+            <div id="pruebas-panel" class="container mx-auto hidden"></div>
+            <div id="mis-postulaciones-panel" class="container mx-auto hidden"></div>
+            <div id="gestion-actividades-panel" class="container mx-auto hidden"></div>
+            <div id="foro-panel" class="container mx-auto hidden"></div>
+            <div id="aula-panel" class="container mx-auto hidden"></div>
+            <div id="horario-panel" class="container mx-auto hidden"></div>
+            <div id="registrar-actividad-panel" class="container mx-auto hidden"></div>
+            <div id="editar-actividad-panel" class="container mx-auto hidden"></div>
+            <div id="proximas-entregas-panel" class="container mx-auto hidden"></div>
+            <div id="asistencia-panel" class="container mx-auto hidden"></div>
+            <div id="mi-curso-panel" class="container mx-auto hidden"></div>
+            <div id="reportes-aula-panel" class="container mx-auto hidden"></div>
+            <div id="ver-actividades-panel" class="container mx-auto hidden"></div>
+        </main>
+    </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const bell = document.getElementById('notification-bell');
+    const panel = document.getElementById('notification-panel');
+    const mainContent = document.querySelector('main');
+
+    // --- LÓGICA DEL MODAL DE POSTULACIÓN Y NAVEGACIÓN DE TARJETAS ---
+    mainContent.addEventListener('click', (e) => {
+        // Navegación de tarjetas de actividades
+        const cardLink = e.target.closest('a[href*="?view="]');
+        if (cardLink && mainContent.contains(cardLink)) {
+            if (!cardLink.closest('aside')) {
+                e.preventDefault();
+                const url = new URL(cardLink.href, window.location.origin);
+                const viewName = url.searchParams.get('view');
+                if (viewName && views[viewName]) {
+                    fetchAndShow(viewName, true);
+                    return;
+                }
+            }
+        }
+
+        // Lógica del modal de postulación
+        const openBtn = e.target.closest('.open-modal-btn');
+        if (openBtn) {
+            const modal = document.getElementById('postulacion-modal');
+            const modalPlazaIdInput = document.getElementById('modal-plaza-id');
+            const modalAsignaturaNombre = document.getElementById('modal-asignatura-nombre');
+
+            const plazaId = openBtn.dataset.plazaId;
+            const asignaturaNombre = openBtn.dataset.asignaturaNombre;
+
+            if (modal && modalPlazaIdInput && modalAsignaturaNombre) {
+                modalPlazaIdInput.value = plazaId;
+                modalAsignaturaNombre.textContent = asignaturaNombre;
+
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => modal.firstElementChild.classList.remove('scale-95'), 10);
+            }
+        }
+
+        const closeBtn = e.target.closest('#close-modal-btn, #cancel-btn');
+        if (closeBtn) {
+            const modal = document.getElementById('postulacion-modal');
+            if (modal) {
+                modal.firstElementChild.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }, 300);
+            }
+        }
+        
+        const modal = document.getElementById('postulacion-modal');
+        if (e.target === modal) {
+             modal.firstElementChild.classList.add('scale-95');
+             setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+             }, 300);
+        }
+    });
+
+    // --- LÓGICA DE NOTIFICACIONES ---
+    const notificationList = document.getElementById('notifications-list');
+    const notificationCount = document.getElementById('notification-count');
+
+    async function cargarNotificaciones() {
+        try {
+            const response = await fetch('/api/notificaciones');
+            if (!response.ok) {
+                throw new Error('No se pudieron cargar las notificaciones.');
+            }
+            const notificaciones = await response.json();
+
+            notificationList.innerHTML = ''; // Limpiar lista actual
+            let unreadCount = 0;
+
+            if (notificaciones.length === 0) {
+                notificationList.innerHTML = '<p class="text-sm text-gray-500 p-4 text-center">No hay notificaciones nuevas.</p>';
+            } else {
+                notificaciones.forEach(notif => {
+                    if (!notif.leida) {
+                        unreadCount++;
+                    }
+                    const notifElement = document.createElement('a');
+                    notifElement.href = notif.url || '#';
+                    notifElement.className = `block px-4 py-3 text-sm border-b hover:bg-gray-100 ${!notif.leida ? 'font-bold text-gray-800' : 'text-gray-600'}`;
+                    notifElement.innerHTML = `
+                        <p class="truncate">${notif.mensaje}</p>
+                        <p class="text-xs text-gray-400 mt-1">${new Date(notif.fechaCreacion).toLocaleString()}</p>
+                    `;
+                    notificationList.appendChild(notifElement);
+                });
+            }
+
+            if (unreadCount > 0) {
+                notificationCount.textContent = unreadCount;
+                notificationCount.classList.remove('hidden');
+            } else {
+                notificationCount.classList.add('hidden');
+            }
+
+        } catch (error) {
+            console.error('Error al cargar notificaciones:', error);
+            notificationList.innerHTML = '<p class="text-sm text-red-500 p-4 text-center">Error al cargar.</p>';
+        }
+    }
+
+    bell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!panel.contains(e.target)) {
+        panel.style.display = 'none';
+      }
+    });
+
+    // Cargar notificaciones al iniciar la página
+    cargarNotificaciones();
+
+    // --- Lógica de Navegación ---
+    const dashboardContent = document.getElementById('dashboard-content');
+    const headerTitle = document.getElementById('header-title');
+    const panels = {
+        'postulaciones': document.getElementById('postulaciones-panel'),
+        'perfil': document.getElementById('perfil-panel'),
+        'mis-pruebas': document.getElementById('pruebas-panel'),
+        'mis-postulaciones': document.getElementById('mis-postulaciones-panel'),
+        'gestion-actividades': document.getElementById('gestion-actividades-panel'),
+        'foro': document.getElementById('foro-panel'),
+        'aula': document.getElementById('aula-panel'),
+        'horario': document.getElementById('horario-panel'),
+        'registrar-actividad': document.getElementById('registrar-actividad-panel'),
+        'editar-actividad': document.getElementById('editar-actividad-panel'),
+        'proximas-entregas': document.getElementById('proximas-entregas-panel'),
+        'asistencia': document.getElementById('asistencia-panel'),
+        'mi-curso': document.getElementById('mi-curso-panel'),
+        'reportes-aula': document.getElementById('reportes-aula-panel'),
+        'ver-actividades': document.getElementById('ver-actividades-panel'),
+    };
+
+    const sidebarLinks = {
+        'dashboard': document.getElementById('dashboard-link'),
+        'postulaciones': document.getElementById('postulaciones-link'),
+        'perfil': document.getElementById('perfil-link'),
+        'mis-pruebas': document.getElementById('pruebas-link'),
+        'mis-postulaciones': document.getElementById('mis-postulaciones-link'),
+        'gestion-actividades': document.getElementById('gestion-actividades-link'),
+        'aula': document.getElementById('aula-link'),
+        'horario': document.getElementById('horario-link'),
+        'foro': document.getElementById('foro-link'),
+    };
+
+    const views = {
+        'postulaciones': { panel: panels.postulaciones, url: '/estudiante/postulaciones?fragment=true', title: 'Postular a Ayudantía' },
+        'perfil': { panel: panels.perfil, url: '/estudiante/perfil', title: 'Mi Perfil' },
+        'mis-pruebas': { panel: panels['mis-pruebas'], url: '/estudiante/mis-pruebas?fragment=true', title: 'Mis Pruebas Agendadas' },
+        'mis-postulaciones': { panel: panels['mis-postulaciones'], url: '/estudiante/mis-postulaciones?fragment=true', title: 'Mis Postulaciones' },
+        'gestion-actividades': { panel: panels['gestion-actividades'], url: '/estudiante/gestion-actividades?fragment=true', title: 'Gestión de Actividades' },
+        'ver-actividades': { panel: panels['ver-actividades'], url: '/estudiante/ver-actividades?fragment=true', title: 'Mis Actividades Subidas' },
+        'aula': { panel: panels.aula, url: '/estudiante/aula?fragment=true', title: 'Aula' },
+        'horario': { panel: panels.horario, url: '/estudiante/horario?fragment=true', title: 'Horario' },
+        'foro': { panel: panels.foro, url: '/estudiante/foro?fragment=true', title: 'Foros de Asignatura' },
+        'registrar-actividad': { panel: panels['registrar-actividad'], url: '/estudiante/registrar-actividad?fragment=true', title: 'Registrar / Subir Actividad' },
+        'editar-actividad': { panel: panels['editar-actividad'], url: '/estudiante/editar-actividad?fragment=true', title: 'Editar Actividad' },
+        'proximas-entregas': { panel: panels['proximas-entregas'], url: '/estudiante/proximas-entregas?fragment=true', title: 'Próximas Entregas' },
+        'asistencia': { panel: panels.asistencia, url: '/estudiante/asistencia?fragment=true', title: 'Asistencia' },
+        'mi-curso': { panel: panels['mi-curso'], url: '/estudiante/mi-curso?fragment=true', title: 'Mi Curso' },
+        'reportes-aula': { panel: panels['reportes-aula'], url: '/estudiante/reportes-aula?fragment=true', title: 'Reportes' },
+    };
+
+    function setActiveSidebarLink(viewName) {
+        Object.values(sidebarLinks).forEach(link => link && link.classList.remove('bg-gray-700'));
+        if(sidebarLinks[viewName]) {
+            sidebarLinks[viewName].classList.add('bg-gray-700');
+        }
+    }
+
+    function hideAllPanels() {
+        dashboardContent.innerHTML = ''; // Limpiar dashboard
+        dashboardContent.classList.add('hidden');
+        Object.values(panels).forEach(p => p && p.classList.add('hidden'));
+    }
+
+    async function loadDashboard() {
+        dashboardContent.innerHTML = '<p class="text-center p-8">Cargando panel principal...</p>';
+        try {
+            const response = await fetch('/estudiante/dashboard-data');
+            if (!response.ok) {
+                if (response.status === 404) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'No se encontró la información del estudiante.');
+                }
+                throw new Error('No se pudo cargar la información del panel.');
+            }
+            const data = await response.json();
+
+            const gpa = data.gpa ? data.gpa.toFixed(2) : 'N/A';
+
+            dashboardContent.innerHTML = `
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800">¡Hola, ${data.studentName}!</h1>
+                    <p class="text-gray-600">Bienvenido/a de nuevo a tu panel de gestión de ayudantías.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-green-500 text-white rounded-full p-4"><i class="fas fa-file-alt text-2xl"></i></div>
+                        <div class="ml-4">
+                            <h3 class="text-4xl font-bold">${data.activeApplications}</h3>
+                            <p class="text-gray-500">Postulaciones Activas</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-yellow-500 text-white rounded-full p-4"><i class="fas fa-calendar-check text-2xl"></i></div>
+                        <div class="ml-4">
+                            <h3 class="text-4xl font-bold">${data.scheduledTests}</h3>
+                            <p class="text-gray-500">Pruebas Agendadas</p>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-green-500 text-white rounded-full p-4"><i class="fas fa-star text-2xl"></i></div>
+                        <div class="ml-4">
+                            <h3 class="text-4xl font-bold">${gpa}</h3>
+                            <p class="text-gray-500">Promedio General (GPA)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 bg-white rounded-lg shadow p-6">
+                    <h2 class="text-xl font-semibold mb-4">Accesos Rápidos</h2>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="fetchAndShow('postulaciones', true)" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg flex items-center"><i class="fas fa-paper-plane mr-2"></i>Ver Plazas Disponibles</button>
+                        <button onclick="fetchAndShow('mis-pruebas', true)" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg flex items-center"><i class="fas fa-calendar-check mr-2"></i>Revisar Mis Pruebas</button>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error('Fallo al cargar el dashboard:', error);
+            dashboardContent.innerHTML = `<div class="p-4 text-red-700 bg-red-100 border border-red-400 rounded">Error al cargar el panel principal: ${error.message} <br>Por favor, contacte a un administrador.</div>`;
+        }
+    }
+
+    function showDashboard(pushState = true) {
+        hideAllPanels();
+        dashboardContent.classList.remove('hidden');
+        headerTitle.textContent = 'Panel del Estudiante';
+        loadDashboard(); // Cargar datos del dashboard
+        if (pushState) {
+            history.pushState({ view: 'dashboard' }, "", "/homeEstudiante");
+        }
+        setActiveSidebarLink('dashboard');
+    }
+
+    async function fetchAndShow(viewName, pushState = true) {
+        const view = views[viewName];
+        if (!view) return;
+
+        hideAllPanels();
+        const panel = view.panel;
+        panel.innerHTML = '<p class="text-center p-8">Cargando...</p>';
+        panel.classList.remove('hidden');
+        headerTitle.textContent = view.title;
+        setActiveSidebarLink(viewName);
+
+        try {
+            const response = await fetch(view.url, { headers: { 'X-Partial': 'true' } });
+            if (!response.ok) throw new Error(`Error en la red: ${response.statusText}`);
+            panel.innerHTML = await response.text();
+            if (pushState) {
+                history.pushState({ view: viewName }, "", `?view=${viewName}`);
+            }
+        } catch (error) {
+            console.error(`Fallo al cargar el fragmento de ${viewName}:`, error);
+            panel.innerHTML = '<div class="p-4 text-red-700 bg-red-100 border border-red-400 rounded">Error al cargar el contenido.</div>';
+        }
+    }
+
+    Object.keys(sidebarLinks).forEach(viewName => {
+        const link = sidebarLinks[viewName];
+        if (link) {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (viewName === 'dashboard') {
+                    showDashboard(true);
+                } else {
+                    fetchAndShow(viewName, true);
+                }
+            });
+        }
+    });
+
+    // Manejar los botones de acceso rápido del dashboard
+    dashboardContent.addEventListener('click', (e) => {
+        const targetButton = e.target.closest('button');
+        if (!targetButton) return;
+
+        if (targetButton.textContent.includes('Ver Plazas')) {
+            fetchAndShow('postulaciones', true);
+        }
+        if (targetButton.textContent.includes('Revisar Mis Pruebas')) {
+            fetchAndShow('mis-pruebas', true);
+        }
+    });
+
+    window.addEventListener('popstate', (e) => {
+        const viewName = e.state ? e.state.view : 'dashboard';
+        if (views[viewName]) {
+            fetchAndShow(viewName, false);
+        } else {
+            showDashboard(false);
+        }
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
+    if (view && views[view]) {
+        fetchAndShow(view, false);
+    } else {
+        showDashboard(false); // Cargar dashboard por defecto
+    }
+
+  });
+</script>
+</body>
+</html>

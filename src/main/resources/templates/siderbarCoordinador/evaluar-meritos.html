@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="content" class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <h1 class="text-3xl font-bold text-gray-800 mb-6">Evaluar Méritos de Postulantes</h1>
+
+    <div class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+        
+        <div th:if="${#maps.isEmpty(evaluacionesPorConvocatoria)}" class="text-center py-12">
+            <div class="inline-block bg-green-100 p-4 rounded-full">
+                <i class="fas fa-check-circle text-4xl text-green-500"></i>
+            </div>
+            <h2 class="mt-4 text-xl font-semibold text-gray-700">¡Todo al día!</h2>
+            <p class="mt-2 text-gray-500">No hay postulaciones pendientes de evaluación de méritos.</p>
+        </div>
+
+        <div th:unless="${#maps.isEmpty(evaluacionesPorConvocatoria)}" class="space-y-8">
+            <div th:each="entry : ${evaluacionesPorConvocatoria}">
+                <h2 class="text-2xl font-semibold text-gray-700 mb-4" th:text="${entry.key}"></h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Postulante</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asignatura</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Postulación</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr th:each="evaluacion : ${entry.value}" th:id="'evaluacion-row-' + ${evaluacion.idEvaluacion}">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900" th:text="${evaluacion.postulacion.estudiante.usuario.nombres + ' ' + evaluacion.postulacion.estudiante.usuario.apellidos}"></div>
+                                    <div class="text-sm text-gray-500" th:text="${evaluacion.postulacion.estudiante.usuario.email}"></div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700" th:text="${evaluacion.postulacion.asignatura.nombre}"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" th:text="${#temporals.format(evaluacion.postulacion.fechaPostulacion, 'dd-MM-yyyy')}"></td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800" th:text="${evaluacion.estado}">
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <button class="evaluar-meritos-btn bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out transform hover:scale-105"
+                                            th:data-evaluacion-id="${evaluacion.idEvaluacion}" onclick="showEvalModal(event)">
+                                        Evaluar
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Evaluar Méritos -->
+    <div id="evaluar-meritos-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 transition-opacity duration-300" onclick="hideEvalModalIfOutside(event)">
+        <div class="bg-white rounded-2xl shadow-xl p-6 sm:p-8 w-full max-w-4xl transform transition-all duration-300 scale-95">
+            
+            <!-- Encabezado del Modal -->
+            <div class="flex justify-between items-center pb-4 border-b border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-800">Evaluación de Méritos</h2>
+                <button class="text-gray-400 hover:text-gray-600" onclick="hideEvalModal()">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+
+            <!-- Cuerpo del Modal -->
+            <div class="mt-6 space-y-6">
+                <!-- Sección de Información del Postulante -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <h3 class="font-semibold text-lg text-gray-700">Postulante</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2 text-sm">
+                        <div>
+                            <span class="font-medium text-gray-500">Nombre:</span>
+                            <span id="modal-nombre-estudiante" class="text-gray-900">Cargando...</span>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-500">Asignatura:</span>
+                            <span id="modal-nombre-asignatura" class="text-gray-900">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección de Evaluación de Méritos -->
+                <div class="space-y-4">
+                    <h3 class="font-semibold text-lg text-gray-700">Desglose de Méritos (Máximo 20 Puntos)</h3>
+
+                    <!-- 1. Calificación de Asignatura -->
+                    <div class="p-4 border rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-medium">1. Calificación en la Asignatura</p>
+                                <p class="text-xs text-gray-500">Puntos basados en la nota (máx. 10 pts).</p>
+                                <input type="number" id="eval-calificacion" step="0.5" min="0" max="10" class="form-input mt-2 w-full sm:w-1/2 rounded-md border-gray-300 shadow-sm" placeholder="Ingrese puntos...">
+                            </div>
+                            <div class="text-right flex-shrink-0 ml-4">
+                                <p class="text-xl font-bold text-indigo-600"><span id="puntos-calificacion">0</span> / 10 pts</p>
+                            </div>
+                        </div>
+                        <div id="doc-container-2" class="mt-2"></div>
+                    </div>
+
+                    <!-- 2. Promedio General -->
+                    <div class="p-4 border rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="font-medium">2. Promedio General Acumulado</p>
+                                <p class="text-xs text-gray-500">Puntos basados en el promedio (máx. 4 pts).</p>
+                                <input type="number" id="eval-promedio" step="0.25" min="0" max="4" class="form-input mt-2 w-full sm:w-1/2 rounded-md border-gray-300 shadow-sm" placeholder="Ingrese puntos...">
+                            </div>
+                            <div class="text-right flex-shrink-0 ml-4">
+                                <p class="text-xl font-bold text-indigo-600"><span id="puntos-promedio">0</span> / 4 pts</p>
+                            </div>
+                        </div>
+                        <div id="doc-container-3" class="mt-2"></div>
+                    </div>
+
+                    <!-- 3. Experiencia -->
+                    <div class="p-4 border rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">3. Experiencia en Colaboración Académica</p>
+                                <p class="text-xs text-gray-500">2 puntos por cada semestre de experiencia (máx. 4 pts).</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-indigo-600"><span id="puntos-experiencia">0</span> / 4 pts</p>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <select id="eval-experiencia" class="form-select w-full sm:w-1/2 rounded-md border-gray-300 shadow-sm">
+                                <option value="0">0 semestres</option>
+                                <option value="2">1 semestre</option>
+                                <option value="4">2 o más semestres</option>
+                            </select>
+                        </div>
+                        <div id="doc-container-4" class="mt-2"></div>
+                    </div>
+
+                    <!-- 4. Actividades Académicas -->
+                    <div class="p-4 border rounded-lg">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-medium">4. Participación en Eventos Académicos</p>
+                                <p class="text-xs text-gray-500">1 punto por cada tipo de participación (máx. 2 pts).</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-indigo-600"><span id="puntos-eventos">0</span> / 2 pts</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 space-y-2 text-sm">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="eval-seminarios" class="form-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300">
+                                <span class="ml-2 text-gray-700">Participó en seminarios o cursos de capacitación</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="eval-representaciones" class="form-checkbox h-5 w-5 text-indigo-600 rounded border-gray-300">
+                                <span class="ml-2 text-gray-700">Participó en representaciones (casa abierta, pósteres, etc.)</span>
+                            </label>
+                        </div>
+                        <div id="doc-container-5" class="mt-2"></div>
+                    </div>
+                </div>
+
+                <!-- Sección de Total y Acciones -->
+                <div class="flex flex-col sm:flex-row justify-between items-center pt-6 border-t border-gray-200">
+                    <div class="mb-4 sm:mb-0">
+                        <span class="text-lg font-medium text-gray-600">PUNTAJE TOTAL DE MÉRITOS:</span>
+                        <span id="total-puntos-meritos" class="text-3xl font-bold text-gray-900 ml-2">0</span>
+                        <span class="text-xl font-semibold text-gray-500">/ 20</span>
+                    </div>
+                    <div class="flex space-x-4">
+                        <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg" onclick="hideEvalModal()">Cancelar</button>
+                        <button id="guardar-evaluacion-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg">Guardar Evaluación</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const modal = document.getElementById('evaluar-meritos-modal');
+
+        // --- Funciones para abrir/cerrar modal ---
+        function showEvalModal(event) {
+            if (event) event.preventDefault();
+            const button = event.currentTarget;
+            const evaluacionId = button.getAttribute('data-evaluacion-id');
+            if (!evaluacionId) return;
+
+            modal.dataset.evaluacionId = evaluacionId;
+            resetModalForm();
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            fetch(`/coordinador/meritos/detalles/${evaluacionId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al cargar los datos.');
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('modal-nombre-estudiante').textContent = data.nombreEstudiante;
+                    document.getElementById('modal-nombre-asignatura').textContent = data.nombreAsignatura;
+
+                    // Llenar campos manuales si ya existen
+                    document.getElementById('eval-calificacion').value = data.puntosCalificacionAsignatura || '';
+                    document.getElementById('eval-promedio').value = data.puntosPromedioGeneral || '';
+                    document.getElementById('eval-experiencia').value = data.puntosExperiencia || 0;
+                    
+                    const puntosEventos = data.puntosEventos || 0;
+                    document.getElementById('eval-seminarios').checked = (puntosEventos >= 1);
+                    document.getElementById('eval-representaciones').checked = (puntosEventos >= 2 || puntosEventos == 1 && !document.getElementById('eval-seminarios').checked) ;
+
+                    // Distribuir documentos de méritos en sus contenedores
+                    if (data.documentosMerito && data.documentosMerito.length > 0) {
+                        data.documentosMerito.forEach(doc => {
+                            const container = document.getElementById(`doc-container-${doc.criterioMerito.id}`);
+                            if (container) {
+                                const a = document.createElement('a');
+                                a.href = '/uploads/' + doc.rutaArchivo;
+                                a.textContent = doc.criterioMerito.descripcion;
+                                a.target = '_blank';
+                                a.className = 'block text-sm text-green-600 hover:underline';
+                                const icon = document.createElement('i');
+                                icon.className = 'fas fa-award ml-2';
+                                a.appendChild(icon);
+                                container.appendChild(a);
+                            }
+                        });
+                    }
+
+                    actualizarPuntajeTotal();
+                })
+                .catch(error => {
+                    console.error('Error en fetch:', error);
+                    document.getElementById('modal-nombre-estudiante').textContent = 'Error al cargar datos.';
+                });
+        }
+
+        function hideEvalModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function hideEvalModalIfOutside(event) {
+            if (event.target.id === 'evaluar-meritos-modal') {
+                hideEvalModal();
+            }
+        }
+
+        function resetModalForm() {
+            document.getElementById('modal-nombre-estudiante').textContent = 'Cargando...';
+            document.getElementById('modal-nombre-asignatura').textContent = 'Cargando...';
+            document.getElementById('eval-calificacion').value = '';
+            document.getElementById('eval-promedio').value = '';
+            document.getElementById('eval-experiencia').value = 0;
+            document.getElementById('eval-seminarios').checked = false;
+            document.getElementById('eval-representaciones').checked = false;
+
+            // Limpiar contenedores de documentos
+            for (let i = 2; i <= 5; i++) {
+                const container = document.getElementById(`doc-container-${i}`);
+                if(container) container.innerHTML = '';
+            }
+
+            actualizarPuntajeTotal();
+        }
+
+        function actualizarPuntajeTotal() {
+            // --- Calificación Asignatura (Máx 10) ---
+            const calificacionInput = document.getElementById('eval-calificacion');
+            let puntosCalificacion = parseFloat(calificacionInput.value) || 0;
+            if (puntosCalificacion > 10) {
+                puntosCalificacion = 10;
+                calificacionInput.value = 10;
+            }
+            document.getElementById('puntos-calificacion').textContent = puntosCalificacion.toFixed(2);
+
+            // --- Promedio General (Máx 4) ---
+            const promedioInput = document.getElementById('eval-promedio');
+            let puntosPromedio = parseFloat(promedioInput.value) || 0;
+            if (puntosPromedio > 4) {
+                puntosPromedio = 4;
+                promedioInput.value = 4;
+            }
+            document.getElementById('puntos-promedio').textContent = puntosPromedio.toFixed(2);
+
+            // --- Experiencia (Máx 4) ---
+            const puntosExperiencia = parseFloat(document.getElementById('eval-experiencia').value) || 0;
+            document.getElementById('puntos-experiencia').textContent = puntosExperiencia.toFixed(2);
+
+            // --- Eventos (Máx 2) ---
+            const puntosSeminarios = document.getElementById('eval-seminarios').checked ? 1 : 0;
+            const puntosRepresentaciones = document.getElementById('eval-representaciones').checked ? 1 : 0;
+            const totalPuntosEventos = puntosSeminarios + puntosRepresentaciones;
+            document.getElementById('puntos-eventos').textContent = totalPuntosEventos.toFixed(2);
+
+            // --- Suma Total ---
+            const total = puntosCalificacion + puntosPromedio + puntosExperiencia + totalPuntosEventos;
+            document.getElementById('total-puntos-meritos').textContent = total.toFixed(2);
+        }
+
+        function guardarEvaluacion() {
+            const evaluacionId = modal.dataset.evaluacionId;
+
+            const dataParaGuardar = {
+                puntajeTotal: parseFloat(document.getElementById('total-puntos-meritos').textContent) || 0,
+                puntosCalificacionAsignatura: parseFloat(document.getElementById('eval-calificacion').value) || 0,
+                puntosPromedioGeneral: parseFloat(document.getElementById('eval-promedio').value) || 0,
+                puntosExperiencia: parseFloat(document.getElementById('eval-experiencia').value) || 0,
+                puntosEventos: (document.getElementById('eval-seminarios').checked ? 1 : 0) + (document.getElementById('eval-representaciones').checked ? 1 : 0)
+            };
+
+            fetch(`/coordinador/meritos/guardar/${evaluacionId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dataParaGuardar)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Error al guardar la evaluación.');
+                return response.json();
+            })
+            .then(data => {
+                hideEvalModal();
+                const fila = document.getElementById(`evaluacion-row-${evaluacionId}`);
+                if (fila) fila.remove();
+            })
+            .catch(error => {
+                console.error('Error al guardar:', error);
+                alert('No se pudo guardar la evaluación. Inténtelo de nuevo.');
+            });
+        }
+
+        // Asignar event listeners a todos los inputs manuales
+        ['eval-calificacion', 'eval-promedio', 'eval-experiencia', 'eval-seminarios', 'eval-representaciones'].forEach(id => {
+            document.getElementById(id).addEventListener('input', actualizarPuntajeTotal);
+        });
+        document.getElementById('guardar-evaluacion-btn').addEventListener('click', guardarEvaluacion);
+
+    </script>
+</div>
+
+</body>
+</html>

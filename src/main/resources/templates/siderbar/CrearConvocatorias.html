@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Convocatorias</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div th:fragment="content">
+  <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Card: Crear Convocatoria -->
+      <div id="card-crear-convocatoria" class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer">
+        <div class="text-cyan-500 mb-4">
+          <i class="fas fa-bullhorn fa-3x"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Crear Convocatoria</h3>
+        <p class="text-gray-600 text-sm">Iniciar un nuevo proceso de selección.</p>
+      </div>
+
+      <!-- Card: Gestionar Convocatorias -->
+      <div id="card-gestionar-convocatorias" class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer">
+        <div class="text-orange-500 mb-4">
+          <i class="fas fa-list-check fa-3x"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Gestionar Convocatorias</h3>
+        <p class="text-gray-600 text-sm">Editar, ver y administrar convocatorias.</p>
+      </div>
+
+      <!-- Card: Resultados y Adjudicación -->
+      <div id="card-resultados-adjudicacion" class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center text-center transform transition-transform duration-300 hover:scale-105 hover:shadow-xl cursor-pointer">
+        <div class="text-emerald-500 mb-4">
+          <i class="fas fa-award fa-3x"></i>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Resultados y Adjudicación</h3>
+        <p class="text-gray-600 text-sm">Publicar resultados y adjudicar plazas.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+      // Assuming 'fetchAndShow' is a global function available from your main layout
+      // and that your main content area has the id 'main-content-dinamico'
+      const contentAreaSelector = '#main-content-dinamico';
+
+      const crearCard = document.getElementById('card-crear-convocatoria');
+      if (crearCard) {
+        crearCard.addEventListener('click', function() {
+          fetchAndShow('/convocatorias/crear?fragment=true', contentAreaSelector);
+        });
+      }
+
+      const gestionarCard = document.getElementById('card-gestionar-convocatorias');
+      if (gestionarCard) {
+        gestionarCard.addEventListener('click', function() {
+          // You'll need a controller for this path. I'll add a placeholder.
+          fetchAndShow('/convocatorias/gestionar-list?fragment=true', contentAreaSelector);
+        });
+      }
+
+      const resultadosCard = document.getElementById('card-resultados-adjudicacion');
+      if (resultadosCard) {
+        resultadosCard.addEventListener('click', function() {
+          // You'll need a controller for this path. I'll add a placeholder.
+          fetchAndShow('/convocatorias/resultados-list?fragment=true', contentAreaSelector);
+        });
+      }
+    });
+  </script>
+</div>
+
+</body>
+</html>

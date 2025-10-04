@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema Académico - Docente</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    .sidebar-scroll::-webkit-scrollbar { width: 5px; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: #4a5568; border-radius: 10px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: #2d3748; }
+    #notification-panel {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 100%;
+        background-color: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 0.375rem;
+        width: 300px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        z-index: 50;
+        color: #000;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+<div class="flex h-screen bg-gray-200">
+    <!-- Sidebar -->
+    <aside class="w-64 bg-gray-800 text-white flex-shrink-0 sidebar-scroll overflow-y-auto">
+        <div class="p-4 border-b border-gray-700">
+            <div class="flex items-center">
+                <i class="fas fa-graduation-cap text-2xl text-green-400"></i>
+                <div class="ml-3">
+                    <h1 class="text-lg font-bold">SGAAC</h1>
+                    <p class="text-xs text-gray-400">Gestión de Ayudantías</p>
+                </div>
+            </div>
+        </div>
+        <nav class="mt-4">
+            <ul class="flex flex-col space-y-2 px-2">
+                <li><a href="#" id="dashboard-link" class="flex items-center py-2 px-4 bg-gray-700 rounded-md text-white"><i class="fas fa-tachometer-alt w-6"></i><span class="ml-3">Panel Principal</span></a></li>
+                <li><a href="#" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-book w-6"></i><span class="ml-3">Mis Cursos</span></a></li>
+                <li><a href="#" id="load-tribunal-sidebar" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-gavel w-6"></i><span class="ml-3">Tribunal de Oposición</span></a></li>
+                <li><a href="#" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-clipboard-list w-6"></i><span class="ml-3">Asistencia / Reforzamientos</span></a></li>
+                <li><a href="#" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-file-upload w-6"></i><span class="ml-3">Documentos Compartidos</span></a></li>
+                <li class="pt-4 mt-4 border-t border-gray-700"><a href="/login" class="flex items-center py-2 px-4 rounded-md hover:bg-gray-700"><i class="fas fa-sign-out-alt w-6"></i><span class="ml-3">Cerrar Sesión</span></a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Content wrapper -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="bg-white shadow z-10">
+            <div class="container mx-auto px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="text-xl font-semibold text-gray-700">Panel del Docente</div>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button id="notification-bell" class="text-gray-600 hover:text-gray-800 focus:outline-none">
+                                <i class="fas fa-bell text-xl"></i>
+                            </button>
+                            <div id="notification-panel" class="p-4">
+                                <p class="font-bold">¡Bienvenido al sistema!</p>
+                                <hr class="my-2"/>
+                                <div id="notifications-list">
+                                    <p class="text-sm text-gray-500">No hay notificaciones nuevas.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-bold" th:text="${userInitial}">D</div>
+                            <span class="ml-3 text-gray-700" th:text="${username}">Docente</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-200 p-6">
+            <div id="dashboard-content" class="container mx-auto">
+                <!-- Tarjetas -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-green-500 text-white rounded-full p-3"><i class="fas fa-book-open text-2xl"></i></div>
+                        <div class="ml-4"><h3 class="text-3xl font-bold">0</h3><p class="text-gray-500">Cursos Asignados</p></div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-green-500 text-white rounded-full p-3"><i class="fas fa-user-friends text-2xl"></i></div>
+                        <div class="ml-4"><h3 class="text-3xl font-bold">0</h3><p class="text-gray-500">Ayudantes Activos</p></div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-yellow-500 text-white rounded-full p-3"><i class="fas fa-envelope-open-text text-2xl"></i></div>
+                        <div class="ml-4"><h3 class="text-3xl font-bold">0</h3><p class="text-gray-500">Solicitudes Pendientes</p></div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6 flex items-center">
+                        <div class="bg-red-500 text-white rounded-full p-3"><i class="fas fa-chalkboard-teacher text-2xl"></i></div>
+                        <div class="ml-4"><h3 class="text-3xl font-bold">0</h3><p class="text-gray-500">Clases de Reforzamiento</p></div>
+                    </div>
+                </div>
+
+                <!-- Secciones -->
+                <div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold">Mis Cursos</h2>
+                            <a href="#" class="text-green-500 hover:underline">Ver todos <i class="fas fa-chevron-right text-xs"></i></a>
+                        </div>
+                        <p class="text-gray-600">Aquí se mostrarán los cursos que imparte.</p>
+                    </div>
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold">Solicitudes de Ayudantía</h2>
+                            <a href="#" class="text-green-500 hover:underline">Gestionar <i class="fas fa-user-plus text-xs"></i></a>
+                        </div>
+                        <p class="text-gray-600">Revisar y aprobar solicitudes de estudiantes.</p>
+                    </div>
+                </div>
+                
+                <!-- Footer dentro del contenido scrolleable -->
+                <footer class="mt-8 text-center text-gray-600 text-sm">
+                    © 2023 Universidad Virtual. Todos los derechos reservados.
+                </footer>
+            </div>
+            <div id="aprobaciones-postulaciones-panel" class="container mx-auto hidden"></div>
+            <div id="tribunal-panel" class="container mx-auto hidden"></div>
+        </main>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const bell = document.getElementById('notification-bell');
+    const panel = document.getElementById('notification-panel');
+
+    bell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!panel.contains(e.target)) {
+            panel.style.display = 'none';
+        }
+    });
+
+    // --- DYNAMIC CONTENT LOADING ---
+
+    const dashboardContent = document.getElementById('dashboard-content');
+    const aprobacionesPanel = document.getElementById('aprobaciones-postulaciones-panel');
+    const tribunalPanel = document.getElementById('tribunal-panel');
+
+    const sidebarLinkElements = {
+        'dashboard': document.getElementById('dashboard-link'),
+        'aprobaciones-postulaciones': document.getElementById('load-aprobaciones-postulaciones-sidebar'),
+        'tribunal': document.getElementById('load-tribunal-sidebar'),
+    };
+
+    const baseUrl = window.location.pathname.replace(/\/$/, '');
+
+    function setActiveSidebarLink(viewName) {
+        Object.values(sidebarLinkElements).forEach(link => link && link.classList.remove('bg-gray-700'));
+        
+        const activeLink = sidebarLinkElements[viewName];
+        if (activeLink) {
+            activeLink.classList.add('bg-gray-700');
+        }
+    }
+
+    function hideAllPanels() {
+        dashboardContent.classList.add('hidden');
+        aprobacionesPanel.classList.add('hidden');
+        tribunalPanel.classList.add('hidden');
+    }
+
+    function showDashboard(pushState = true) {
+        hideAllPanels();
+        dashboardContent.classList.remove('hidden');
+        if (pushState) {
+            const username = new URLSearchParams(window.location.search).get('username');
+            let url = baseUrl || '/';
+            if (username) {
+                url += `?username=${username}`;
+            }
+            history.pushState({ view: 'dashboard' }, '', url);
+        }
+        document.querySelector('header .text-xl').textContent = 'Panel del Docente';
+        setActiveSidebarLink('dashboard');
+    }
+
+    async function fetchAndShow(panel, url, title, view, pushState) {
+        hideAllPanels();
+        panel.innerHTML = '<p class="text-center p-8">Cargando...</p>';
+        panel.classList.remove('hidden');
+        document.querySelector('header .text-xl').textContent = title;
+
+        try {
+            const response = await fetch(url, { headers: { 'X-Partial': 'true' } });
+            if (!response.ok) throw new Error(`Error en la red: ${response.statusText}`);
+            const html = await response.text();
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+
+            panel.innerHTML = '';
+            Array.from(tempDiv.children).forEach(child => {
+                if (child.tagName.toLowerCase() !== 'script') {
+                    panel.appendChild(child.cloneNode(true));
+                }
+            });
+
+            tempDiv.querySelectorAll('script').forEach(script => {
+                const newScript = document.createElement('script');
+                Array.from(script.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+                newScript.textContent = script.textContent;
+                document.body.appendChild(newScript).parentNode.removeChild(newScript);
+            });
+
+            if (pushState) {
+                const username = new URLSearchParams(window.location.search).get('username');
+                history.pushState({ view: view }, "", `?username=${username}&view=${view}`);
+            }
+        } catch (error) {
+            console.error(`Fallo al cargar el fragmento de ${view}:`, error);
+            panel.innerHTML = '<div class="p-4 text-red-700 bg-red-100 border border-red-400 rounded">Error al cargar el contenido.</div>';
+        }
+    }
+
+    const views = {
+        'aprobaciones-postulaciones': { panel: aprobacionesPanel, url: '/docente/aprobaciones-postulaciones?fragment=true', title: 'Aprobación de Postulaciones' },
+        'tribunal': { panel: tribunalPanel, url: '/docente/tribunal?fragment=true', title: 'Tribunal de Oposición' }
+    };
+
+    function handleLinkClick(viewName, pushState) {
+        const view = views[viewName];
+        if (view) {
+            setActiveSidebarLink(viewName);
+            fetchAndShow(view.panel, view.url, view.title, viewName, pushState);
+        }
+    }
+
+    Object.entries(sidebarLinkElements).forEach(([viewName, linkElement]) => {
+        if (linkElement) {
+            linkElement.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (viewName === 'dashboard') {
+                    showDashboard(true);
+                } else {
+                    handleLinkClick(viewName, true);
+                }
+            });
+        }
+    });
+
+    window.addEventListener('popstate', (e) => {
+        const viewName = e.state ? e.state.view : 'dashboard';
+        if (views[viewName]) {
+            handleLinkClick(viewName, false);
+        } else {
+            showDashboard(false);
+        }
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const view = params.get('view');
+    if (view && views[view]) {
+        handleLinkClick(view, false);
+    } else {
+        if(view) {
+            const username = params.get('username');
+            let url = window.location.pathname;
+            if (username) {
+                url += `?username=${username}`;
+            }
+            history.replaceState({ view: 'dashboard' }, '', url);
+        }
+        showDashboard(false);
+<!-- ... (existing script content) ... -->
+    }
+});
+</script>
+
+<!-- Modal de Detalles de Postulación -->
+<div id="detalle-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4" id="modal-title">Detalles del Postulante</h2>
+        <div id="modal-content" class="space-y-3">
+            <!-- El contenido se inyectará aquí con JavaScript -->
+        </div>
+        <div class="flex justify-end mt-6">
+            <button id="modal-close-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Cerrar</button>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
